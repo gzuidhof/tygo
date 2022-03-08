@@ -4,6 +4,15 @@ Tygo is a tool for generating Typescript typings from Golang source files that j
 
 Other than reflection-based methods it preserves comments, understands constants and also supports non-struct `type` expressions. It's perfect for generating equivalent types for a Golang REST API to be used in your front-end codebase.
 
+## Installation
+
+```shell
+# Go >= 1.17
+go install github.com/gzuidhof/tygo@latest
+# Go < 1.17:
+go install github.com/gzuidhof/tygo
+```
+
 ## Example
 
 _Golang input file_
@@ -85,19 +94,19 @@ For a real baptism by fire example, [here is a Gist with output for the Go built
 
 ## Usage
 
-There are two ways to use this project, either you can use the CLI tool `tygo` (recommended) or as a library.
-
 ### Option A: CLI (recommended)
 
-Create a file `tygo.yaml`, in that file you specify which packages are to be converted and any type mappings you want to override.
+Create a file `tygo.yaml` in which you specify which packages are to be converted and any special type mappings you want to add.
 
 ```yaml
 packages:
   - path: "github.com/gzuidhof/tygo/examples/bookstore"
     type_mappings:
-      time.Time: "string /* RFC 3339 formatted */"
-      null.String: "string | null"
-      uuid.UUID: "string"
+      time.Time: "string /* RFC3339 */"
+      null.String: "null | string"
+      null.Bool: "null | boolean"
+      uuid.UUID: "string /* uuid */"
+      uuid.NullUUID: "null | string /* uuid */"
 ```
 
 Then run
