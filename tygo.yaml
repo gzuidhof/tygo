@@ -1,0 +1,24 @@
+# This is a config file that typescriptifies the packages under the example folder.
+# and some other packages.
+
+packages:
+  - path: "github.com/gzuidhof/tygo/examples/bookstore"
+    type_mappings:
+      time.Time: "string /* RFC 3339 formatted */"
+      null.String: "string | null"
+      uuid.UUID: "string"
+  - path: "github.com/gzuidhof/tygo/examples/abstract"
+    indent: "  "
+    exclude_files:
+      - "excluded.go"
+    frontmatter: | # We can define some additional text to put at the start of the file.
+      export type Something = string | number;
+  - path: "github.com/gzuidhof/tygo/examples/simple"
+  # Generate the "net/http" output example, note the output is in gitignore as it's pretty big
+  - path: "net/http"
+    output_path: "./examples/http/index.ts"
+    type_mappings:
+      time.Duration: "number /* time in nanoseconds (time.Duration) */"
+  # Generate the "time" output example, note the output is in gitignore as it's pretty big
+  - path: "time"
+    output_path: "./examples/time/index.ts"
