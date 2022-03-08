@@ -177,7 +177,9 @@ export interface Book {
 }
 ```
 
-Alternatively you could use the `frontmatter` in the `tygo.yaml` config file to inject `export Genre = "novel" | "crime" | "fantasy"` at the top of the file, and use `tstype:"Genre"`.
+**Alternative**
+
+You could use the `frontmatter` field in the config to inject `export type Genre = "novel" | "crime" | "fantasy"` at the top of the file, and use `tstype:"Genre"`. I personally prefer that as we may use the `Genre` type more than once.
 
 ## Related projects
 
