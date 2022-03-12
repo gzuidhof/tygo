@@ -45,6 +45,7 @@ type UserEntry struct {
 
 	Complex    ComplexType `json:"complex"`
 	unexported bool        // Unexported fields are omitted
+	Ignored    bool        `tstype:"-"` // Fields with - are omitted too
 }
 
 type ListUsersResponse struct {
