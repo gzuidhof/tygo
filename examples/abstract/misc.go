@@ -31,6 +31,9 @@ type StructBar struct {
 	// Comment for field Field of type Foo
 	Field                 Foo   `json:"field"` // Line Comment for field Field of type Foo
 	FieldWithWeirdJSONTag int64 `json:"weird"`
+
+	FieldThatShouldBeOptional    *string `json:"field_that_should_be_optional"`
+	FieldThatShouldNotBeOptional *string `json:"field_that_should_not_be_optional" tstype:",required"`
 }
 
 // DROPPED: Floating comment at the end
