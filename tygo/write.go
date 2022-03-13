@@ -133,6 +133,9 @@ func (g *PackageGenerator) writeFields(s *strings.Builder, fields []*ast.Field, 
 			tstypeTag, err := tags.Get("tstype")
 			if err == nil {
 				tstype = tstypeTag.Name
+        if tstype == "-" {
+					continue
+				}
 				required = tstypeTag.HasOption("required")
 			}
 
