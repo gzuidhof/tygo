@@ -167,7 +167,9 @@ See also the source file [tygo/config.go](./tygo/config.go).
 
 ## Type hints through tagging
 
-You can tag struct fields with `tstype` to specify their output Typescript type. For instance:
+You can tag struct fields with `tstype` to specify their output Typescript type.
+
+### Custom type mapping
 
 ```golang
 // Golang input
@@ -190,6 +192,30 @@ export interface Book {
 **Alternative**
 
 You could use the `frontmatter` field in the config to inject `export type Genre = "novel" | "crime" | "fantasy"` at the top of the file, and use `tstype:"Genre"`. I personally prefer that as we may use the `Genre` type more than once.
+
+### Required fields
+
+Pointer type fields usually become optional in the Typescript output, but sometimes you may want to require it regardless.
+
+You can add `,required` to the `tstype` tag to mark a pointer type as required.
+
+```golang
+// Golang input
+type Nicknames struct {
+	Alice   *string `json:"alice"`
+	Bob     *string `json:"bob" tstype:"BobCustomType,required"`
+	Charlie *string `json:"charlie" tstype:",required"`
+}
+```
+
+```typescript
+// Typescript output
+export interface Nicknames {
+  alice?: string;
+  bob: BobCustomType;
+  charlie: string;
+}
+```
 
 ## Related projects
 

@@ -103,6 +103,7 @@ func (g *PackageGenerator) writeType(s *strings.Builder, t ast.Expr, depth int, 
 func (g *PackageGenerator) writeFields(s *strings.Builder, fields []*ast.Field, depth int) {
 	for _, f := range fields {
 		optional := false
+		required := false
 
 		var fieldName string
 		if len(f.Names) != 0 && f.Names[0] != nil && len(f.Names[0].Name) != 0 {
@@ -131,11 +132,13 @@ func (g *PackageGenerator) writeFields(s *strings.Builder, fields []*ast.Field, 
 			}
 			tstypeTag, err := tags.Get("tstype")
 			if err == nil {
-				tstype = tstypeTag.Value()
+				tstype = tstypeTag.Name
 				if tstype == "-" {
 					continue
 				}
+				required = tstypeTag.HasOption("required")
 			}
+
 		}
 
 		if len(name) == 0 {
@@ -156,7 +159,7 @@ func (g *PackageGenerator) writeFields(s *strings.Builder, fields []*ast.Field, 
 
 		switch t := f.Type.(type) {
 		case *ast.StarExpr:
-			optional = true
+			optional = !required
 			f.Type = t.X
 		}
 
