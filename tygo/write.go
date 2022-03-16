@@ -115,6 +115,11 @@ func (g *PackageGenerator) writeType(s *strings.Builder, t ast.Expr, depth int, 
 			}
 		}
 		s.WriteByte('>')
+	case *ast.IndexExpr:
+		g.writeType(s, t.X, depth, false)
+		s.WriteByte('<')
+		g.writeType(s, t.Index, depth, false)
+		s.WriteByte('>')
 	default:
 		err := fmt.Errorf("unhandled: %s\n %T", t, t)
 		fmt.Println(err)

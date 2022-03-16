@@ -1,3 +1,6 @@
+# 0.2.1
+* Add support for single `IndexExpr` in type alias, such as `type X = Y[string]`.
+
 # 0.2.0
 
 * Support for generic types for Golang 1.18 and beyond.

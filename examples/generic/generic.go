@@ -49,3 +49,9 @@ type WithFooGenericTypeArg[A Foo[string, *string]] struct {
 func (f Foo[int, Derived]) DoSomething() {
 	panic("something")
 }
+
+type Single[S string | uint] struct {
+	Field S
+}
+
+type SingleSpecific = Single[string]

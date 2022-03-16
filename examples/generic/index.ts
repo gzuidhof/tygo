@@ -41,3 +41,7 @@ export interface Foo<A extends string | number /* uint64 */, B extends (A | unde
 export interface WithFooGenericTypeArg<A extends Foo<string, string | undefined>> {
   some_field: A;
 }
+export interface Single<S extends string | number /* uint */> {
+  Field: S;
+}
+export type SingleSpecific = Single<string>;
