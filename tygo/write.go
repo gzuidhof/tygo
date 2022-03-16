@@ -105,7 +105,16 @@ func (g *PackageGenerator) writeType(s *strings.Builder, t ast.Expr, depth int, 
 			fmt.Println(err)
 			panic(err)
 		}
-
+	case *ast.IndexListExpr:
+		g.writeType(s, t.X, depth, false)
+		s.WriteByte('<')
+		for i, index := range t.Indices {
+			g.writeType(s, index, depth, false)
+			if i != len(t.Indices)-1 {
+				s.WriteString(", ")
+			}
+		}
+		s.WriteByte('>')
 	default:
 		err := fmt.Errorf("unhandled: %s\n %T", t, t)
 		fmt.Println(err)
