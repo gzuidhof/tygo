@@ -14,6 +14,7 @@ packages:
     frontmatter: | # We can define some additional text to put at the start of the file.
       export type Something = string | number;
   - path: "github.com/gzuidhof/tygo/examples/simple"
+  - path: "github.com/gzuidhof/tygo/examples/generic"
   # Generate the "net/http" output example, note the output is in gitignore as it's pretty big
   - path: "net/http"
     output_path: "./examples/http/index.ts"

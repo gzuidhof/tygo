@@ -1,4 +1,8 @@
-# 0.1.2 (unreleased)
+# 0.2.0
+
+* Support for generic types for Golang 1.18 and beyond.
+
+# 0.1.2
 
 * You can now mark pointer type fields as required by adding `,required` to the struct field tag. 
 

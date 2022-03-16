@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"go/ast"
+	"go/token"
 
 	"github.com/fatih/structtag"
 )
@@ -55,7 +56,7 @@ func (g *PackageGenerator) writeType(s *strings.Builder, t ast.Expr, depth int, 
 		s.WriteString("[]")
 	case *ast.StructType:
 		s.WriteString("{\n")
-		g.writeFields(s, t.Fields.List, depth+1)
+		g.writeStructFields(s, t.Fields.List, depth+1)
 		g.writeIndent(s, depth+1)
 		s.WriteByte('}')
 	case *ast.Ident:
@@ -90,9 +91,30 @@ func (g *PackageGenerator) writeType(s *strings.Builder, t ast.Expr, depth int, 
 		s.WriteString(t.Op.String())
 		s.WriteByte(' ')
 		g.writeType(s, t.Y, depth, false)
-	case *ast.InterfaceType, *ast.CallExpr, *ast.FuncType, *ast.ChanType:
+	case *ast.InterfaceType:
+		g.writeInterfaceFields(s, t.Methods.List, depth+1)
+	case *ast.CallExpr, *ast.FuncType, *ast.ChanType:
 		s.WriteString("any")
-
+	case *ast.UnaryExpr:
+		if t.Op == token.TILDE {
+			// We just ignore the tilde token, in Typescript extended types are
+			// put into the generic typing itself, which we can't support yet.
+			g.writeType(s, t.X, depth, false)
+		} else {
+			err := fmt.Errorf("unhandled unary expr: %v\n %T", t, t)
+			fmt.Println(err)
+			panic(err)
+		}
+	case *ast.IndexListExpr:
+		g.writeType(s, t.X, depth, false)
+		s.WriteByte('<')
+		for i, index := range t.Indices {
+			g.writeType(s, index, depth, false)
+			if i != len(t.Indices)-1 {
+				s.WriteString(", ")
+			}
+		}
+		s.WriteByte('>')
 	default:
 		err := fmt.Errorf("unhandled: %s\n %T", t, t)
 		fmt.Println(err)
@@ -100,8 +122,46 @@ func (g *PackageGenerator) writeType(s *strings.Builder, t ast.Expr, depth int, 
 	}
 }
 
-func (g *PackageGenerator) writeFields(s *strings.Builder, fields []*ast.Field, depth int) {
+func (g *PackageGenerator) writeTypeParamsFields(s *strings.Builder, fields []*ast.Field) {
+	s.WriteByte('<')
+	for i, f := range fields {
+		for j, ident := range f.Names {
+			s.WriteString(ident.Name)
+			s.WriteString(" extends ")
+			g.writeType(s, f.Type, 0, true)
+
+			if i != len(fields)-1 || j != len(f.Names)-1 {
+				s.WriteString(", ")
+			}
+		}
+	}
+	s.WriteByte('>')
+}
+
+func (g *PackageGenerator) writeInterfaceFields(s *strings.Builder, fields []*ast.Field, depth int) {
+	if len(fields) == 0 { // Type without any fields (probably only has methods)
+		s.WriteString("any")
+		return
+	}
+	s.WriteByte('\n')
 	for _, f := range fields {
+		if _, isFunc := f.Type.(*ast.FuncType); isFunc {
+			continue
+		}
+		g.writeCommentGroupIfNotNil(s, f.Doc, depth+1)
+		g.writeIndent(s, depth+1)
+		g.writeType(s, f.Type, depth, false)
+
+		if f.Comment != nil {
+			s.WriteString(" // ")
+			s.WriteString(f.Comment.Text())
+		}
+	}
+}
+
+func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.Field, depth int) {
+	for _, f := range fields {
+		// fmt.Println(f.Type)
 		optional := false
 		required := false
 
@@ -138,7 +198,6 @@ func (g *PackageGenerator) writeFields(s *strings.Builder, fields []*ast.Field, 
 				}
 				required = tstypeTag.HasOption("required")
 			}
-
 		}
 
 		if len(name) == 0 {

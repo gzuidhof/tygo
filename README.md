@@ -4,6 +4,8 @@ Tygo is a tool for generating Typescript typings from Golang source files that j
 
 Other than reflection-based methods it preserves comments, understands constants and also supports non-struct `type` expressions. It's perfect for generating equivalent types for a Golang REST API to be used in your front-end codebase.
 
+**🚀 Now supports Golang 1.18 generic types**
+
 ## Installation
 
 ```shell
@@ -217,9 +219,39 @@ export interface Nicknames {
 }
 ```
 
+## Generics
+Tygo supports generic types (Go version >= 1.18) out of the box. 
+
+```go
+// Golang input
+type UnionType interface {
+	uint64 | string
+}
+
+type ABCD[A, B string, C UnionType, D int64 | bool] struct {
+	A A `json:"a"`
+	B B `json:"b"`
+	C C `json:"c"`
+	D D `json:"d"`
+}
+```
+```typescript
+// Typescript output
+export type UnionType = 
+    number /* uint64 */ | string
+;
+
+export interface ABCD<A extends string, B extends string, C extends UnionType, D extends number /* int64 */ | boolean> {
+  a: A;
+  b: B;
+  c: C;
+  d: D;
+}
+```
+
 ## Related projects
 
-- [**typescriptify-golang-structs**](https://github.com/tkrajina/typescriptify-golang-structs): Probably the most popular choice. The issue with this package is that it relies on reflection rather than parsing, which means that certain things can't be kept such comments. The CLI generates Go file which is then executed and reflected on, and its library requires you to manually specify all types that should be converted.
+- [**typescriptify-golang-structs**](https://github.com/tkrajina/typescriptify-golang-structs): Probably the most popular choice. The issue with this package is that it relies on reflection rather than parsing, which means that certain things can't be kept such as comments. The CLI generates Go file which is then executed and reflected on, and its library requires you to manually specify all types that should be converted.
 - [**go2ts**](https://github.com/StirlingMarketingGroup/go2ts): A transpiler with a web interface, this project was based off this project. It's perfect for quick one-off transpilations. There is no CLI, no support for `const` and there are no ways to customize the output.
 
 ## License
