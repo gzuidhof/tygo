@@ -78,8 +78,13 @@ func (g *PackageGenerator) writeTypeSpec(s *strings.Builder, ts *ast.TypeSpec, g
 	if isStruct {
 		s.WriteString("export interface ")
 		s.WriteString(ts.Name.Name)
+
+		if ts.TypeParams != nil {
+			g.writeTypeParamsFields(s, ts.TypeParams.List)
+		}
+
 		s.WriteString(" {\n")
-		g.writeFields(s, st.Fields.List, 0)
+		g.writeStructFields(s, st.Fields.List, 0)
 		s.WriteString("}")
 	}
 
