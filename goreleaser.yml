@@ -1,0 +1,22 @@
+project_name: tygo
+builds:
+  - binary: tygo
+    goos:
+      - windows
+      - darwin
+      - linux
+    goarch:
+      - amd64
+    ldflags:
+      - -s -w -X github.com/gzuidhof/tygo/cmd.version={{.Version}} -X github.com/gzuidhof/tygo/cmd.commit={{.Commit}} -X github.com/gzuidhof/tygo/cmd.commitDate={{.CommitDate}} -X github.com/gzuidhof/tygo/cmd.target={{.Env.GOOS}}
+archives:
+  - name_template: "{{ .ProjectName }}_{{ .Tag }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      386: i386
+      amd64: x86_64
+    format_overrides:
+      - goos: windows
+        format: zip
