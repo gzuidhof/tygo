@@ -224,30 +224,31 @@ Tygo supports generic types (Go version >= 1.18) out of the box.
 
 ```go
 // Golang input
+type UnionType[T any] interface {
+	uint64 | string
+}
 
-type ABCD[A, B, C string, D int64 | bool] struct {
+type ABCD[A, B string, C UnionType, D int64 | bool] struct {
 	A A `json:"a"`
 	B B `json:"b"`
 	C C `json:"c"`
 	D D `json:"d"`
 }
 
-type UnionType[T any] interface {
-	uint64 | string
-}
+
 ```
 ```typescript
 // Typescript output
-export interface ABCD<A extends string, B extends string, C extends string, D extends number /* int64 */ | boolean> {
+export type UnionType = 
+    number /* uint64 */ | string
+;
+
+export interface ABCD<A extends string, B extends string, C extends UnionType, D extends number /* int64 */ | boolean> {
   a: A;
   b: B;
   c: C;
   d: D;
 }
-
-export type UnionType = 
-    number /* uint64 */ | string
-;
 ```
 
 ## Related projects
