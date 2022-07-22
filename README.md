@@ -62,7 +62,9 @@ _Typescript output_
  * Comments are kept :)
  */
 export type ComplexType = {
-  [key: string]: { [key: number /* uint16 */]: number /* uint32 */ | undefined };
+  [key: string]: {
+    [key: number /* uint16 */]: number /* uint32 */ | undefined;
+  };
 };
 export type UserRole = string;
 export const UserRoleDefault: UserRole = "viewer";
@@ -219,8 +221,29 @@ export interface Nicknames {
 }
 ```
 
+### Readonly fields
+
+Sometimes a field should be immutable, you can `,readonly` to the `tstype` tag to mark a field as `readonly`.
+
+```golang
+// Golang input
+type Cat struct {
+	Name    string `json:"name,readonly"`
+	Owner   string `json:"owner"`
+}
+```
+
+```typescript
+// Typescript output
+export interface Cat {
+  readonly name: string;
+  owner: string;
+}
+```
+
 ## Generics
-Tygo supports generic types (Go version >= 1.18) out of the box. 
+
+Tygo supports generic types (Go version >= 1.18) out of the box.
 
 ```go
 // Golang input
@@ -235,13 +258,17 @@ type ABCD[A, B string, C UnionType, D int64 | bool] struct {
 	D D `json:"d"`
 }
 ```
+
 ```typescript
 // Typescript output
-export type UnionType = 
-    number /* uint64 */ | string
-;
+export type UnionType = number /* uint64 */ | string;
 
-export interface ABCD<A extends string, B extends string, C extends UnionType, D extends number /* int64 */ | boolean> {
+export interface ABCD<
+  A extends string,
+  B extends string,
+  C extends UnionType,
+  D extends number /* int64 */ | boolean
+> {
   a: A;
   b: B;
   c: C;

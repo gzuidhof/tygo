@@ -169,6 +169,7 @@ func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.F
 		// fmt.Println(f.Type)
 		optional := false
 		required := false
+		readonly := false
 
 		var fieldName string
 		if len(f.Names) != 0 && f.Names[0] != nil && len(f.Names[0].Name) != 0 {
@@ -202,6 +203,7 @@ func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.F
 					continue
 				}
 				required = tstypeTag.HasOption("required")
+				readonly = tstypeTag.HasOption("readonly")
 			}
 		}
 
@@ -215,6 +217,9 @@ func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.F
 		quoted := !validJSName(name)
 		if quoted {
 			s.WriteByte('\'')
+		}
+		if readonly {
+			s.WriteString("readonly ")
 		}
 		s.WriteString(name)
 		if quoted {
