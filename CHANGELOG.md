@@ -1,3 +1,6 @@
+# 0.2.2
+* Add support for `readonly` fields.
+
 # 0.2.1
 * Add support for single `IndexExpr` in type alias, such as `type X = Y[string]`.
 
