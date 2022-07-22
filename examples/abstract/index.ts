@@ -53,4 +53,5 @@ export interface StructBar {
   weird: number /* int64 */;
   field_that_should_be_optional?: string;
   field_that_should_not_be_optional: string;
+  readonly field_that_should_be_readonly: string;
 }
