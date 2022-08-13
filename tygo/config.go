@@ -29,6 +29,9 @@ type PackageConfig struct {
 
 	// Filenames of Go source files that should not be included in the Typescript output.
 	ExcludeFiles []string `yaml:"exclude_files"`
+
+	// Filenames of Go source files that should be included in the Typescript output.
+	IncludeFiles []string `yaml:"include_files"`
 }
 
 type Config struct {
@@ -64,6 +67,17 @@ func (c PackageConfig) IsFileIgnored(pathToFile string) bool {
 			return true
 		}
 	}
+
+	// if defined, only included files are allowed
+	if len(c.IncludeFiles) > 0 {
+		for _, include := range c.IncludeFiles {
+			if basename == include {
+				return false
+			}
+		}
+		return true
+	}
+
 	return false
 }
 
