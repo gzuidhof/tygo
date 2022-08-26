@@ -1,3 +1,6 @@
+# 0.2.3
+* Add support for `include_files` in the config, which allows one to specify the only files that should be included.
+
 # 0.2.2
 * Add support for `readonly` fields.
 
