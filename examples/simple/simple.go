@@ -20,7 +20,7 @@ type UserEntry struct {
 	Preferences map[string]struct {
 		Foo uint32 `json:"foo"`
 		// An unknown type without a `tstype` tag or mapping in the config file
-		// becomes `any`
+		// uses the `fallback_type`, which defaults to `any`.
 		Bar uuid.UUID `json:"bar"`
 	} `json:"prefs"`
 
