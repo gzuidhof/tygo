@@ -20,9 +20,9 @@ export interface UserEntry {
     foo: number /* uint32 */;
     /**
      * An unknown type without a `tstype` tag or mapping in the config file
-     * becomes `any`
+     * uses the `fallback_type`, which defaults to `any`.
      */
-    bar: any /* uuid.UUID */;
+    bar: unknown /* uuid.UUID */;
   }};
   address?: string;
   nickname?: string;

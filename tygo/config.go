@@ -32,6 +32,9 @@ type PackageConfig struct {
 
 	// Filenames of Go source files that should be included in the Typescript output.
 	IncludeFiles []string `yaml:"include_files"`
+
+	// FallbackType defines the Typescript type used as a fallback for unknown Go types.
+	FallbackType string `yaml:"fallback_type"`
 }
 
 type Config struct {

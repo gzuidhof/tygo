@@ -60,15 +60,19 @@ func (g *PackageGenerator) writeType(s *strings.Builder, t ast.Expr, depth int, 
 		g.writeIndent(s, depth+1)
 		s.WriteByte('}')
 	case *ast.Ident:
-		s.WriteString(getIdent(t.String()))
+		if t.String() == "any" {
+			s.WriteString(getIdent(g.conf.FallbackType))
+		} else {
+			s.WriteString(getIdent(t.String()))
+		}
 	case *ast.SelectorExpr:
 		// e.g. `time.Time`
 		longType := fmt.Sprintf("%s.%s", t.X, t.Sel)
 		mappedTsType, ok := g.conf.TypeMappings[longType]
 		if ok {
 			s.WriteString(mappedTsType)
-		} else { // For unknown types we put `any`
-			s.WriteString("any")
+		} else { // For unknown types we use the fallback type
+			s.WriteString(g.conf.FallbackType)
 			s.WriteString(" /* ")
 			s.WriteString(longType)
 			s.WriteString(" */")
@@ -94,7 +98,7 @@ func (g *PackageGenerator) writeType(s *strings.Builder, t ast.Expr, depth int, 
 	case *ast.InterfaceType:
 		g.writeInterfaceFields(s, t.Methods.List, depth+1)
 	case *ast.CallExpr, *ast.FuncType, *ast.ChanType:
-		s.WriteString("any")
+		s.WriteString(g.conf.FallbackType)
 	case *ast.UnaryExpr:
 		if t.Op == token.TILDE {
 			// We just ignore the tilde token, in Typescript extended types are
@@ -145,7 +149,7 @@ func (g *PackageGenerator) writeTypeParamsFields(s *strings.Builder, fields []*a
 
 func (g *PackageGenerator) writeInterfaceFields(s *strings.Builder, fields []*ast.Field, depth int) {
 	if len(fields) == 0 { // Type without any fields (probably only has methods)
-		s.WriteString("any")
+		s.WriteString(g.conf.FallbackType)
 		return
 	}
 	s.WriteByte('\n')
