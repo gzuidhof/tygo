@@ -1,3 +1,6 @@
+# 0.2.4
+* Add support for `fallback_type`, which allows one to specify the type that should be used for unknown types (defaults to `any`).
+
 # 0.2.3
 * Add support for `include_files` in the config, which allows one to specify the only files that should be included.
 
