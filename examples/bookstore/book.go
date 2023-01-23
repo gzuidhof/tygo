@@ -9,6 +9,8 @@ import (
 
 type ISBN null.String
 
+// Chapter some random docs
+// TsType -- tells tygo to generate ts type for this struct
 type Chapter struct {
 	// Chapter title
 	Title string `json:"title"`

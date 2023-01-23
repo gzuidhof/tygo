@@ -23,9 +23,13 @@ func (g *PackageGenerator) Generate() (string, error) {
 
 		ast.Inspect(file, func(n ast.Node) bool {
 			switch x := n.(type) {
-
 			// GenDecl can be an import, type, var, or const expression
 			case *ast.GenDecl:
+				if g.conf.IncludeStructComment != "" &&
+					!strings.Contains(x.Doc.Text(), g.conf.IncludeStructComment) {
+					return false
+				}
+
 				if x.Tok == token.VAR || x.Tok == token.IMPORT {
 					return false
 				}

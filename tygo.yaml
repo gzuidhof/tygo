@@ -7,6 +7,7 @@ packages:
       time.Time: "string /* RFC 3339 formatted */"
       null.String: "string | null"
       uuid.UUID: "string"
+    include_struct_comment: "TsType"
   - path: "github.com/gzuidhof/tygo/examples/abstract"
     indent: "  "
     exclude_files:

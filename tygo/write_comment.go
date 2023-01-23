@@ -23,6 +23,12 @@ func (g *PackageGenerator) writeCommentGroup(s *strings.Builder, f *ast.CommentG
 		if len(strings.TrimSpace(c)) == 0 {
 			continue
 		}
+
+		if g.conf.IncludeStructComment != "" &&
+			strings.Contains(c, g.conf.IncludeStructComment) {
+			continue
+		}
+
 		g.writeIndent(s, depth)
 		s.WriteString(" * ")
 		c = strings.ReplaceAll(c, "*/", "*\\/") // An edge case: a // comment can contain */

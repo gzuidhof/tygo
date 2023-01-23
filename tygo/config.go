@@ -35,6 +35,9 @@ type PackageConfig struct {
 
 	// FallbackType defines the Typescript type used as a fallback for unknown Go types.
 	FallbackType string `yaml:"fallback_type"`
+
+	// IncludeStructNames
+	IncludeStructComment string `yaml:"include_struct_comment"`
 }
 
 type Config struct {
