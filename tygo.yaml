@@ -25,3 +25,5 @@ packages:
   # Generate the "time" output example, note the output is in gitignore as it's pretty big
   - path: "time"
     output_path: "./examples/time/index.ts"
+  - path: "github.com/gzuidhof/tygo/examples/yaml"
+    output_path: "./examples/yaml/index.ts"
