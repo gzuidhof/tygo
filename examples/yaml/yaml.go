@@ -10,5 +10,7 @@ type YAMLTest struct {
 	MaybeFieldWithStar *string `yaml:"address"`
 	Nickname           string  `yaml:"nickname,omitempty"`
 
+	ThisWillGetLowercased string
+
 	unexported bool // Unexported fields won't be in the output
 }

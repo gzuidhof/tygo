@@ -10,4 +10,5 @@ export interface YAMLTest {
   }};
   address?: string;
   nickname?: string;
+  thiswillgetlowercased: string;
 }

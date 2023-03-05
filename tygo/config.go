@@ -1,6 +1,7 @@
 package tygo
 
 import (
+	"fmt"
 	"log"
 	"path/filepath"
 	"strings"
@@ -35,6 +36,12 @@ type PackageConfig struct {
 
 	// FallbackType defines the Typescript type used as a fallback for unknown Go types.
 	FallbackType string `yaml:"fallback_type"`
+
+	// Flavor defines what the key names of the output types will look like.
+	// Supported values: "default", "" (same as "default"), "yaml".
+	// In "default" mode, `json` and `yaml` tags are respected, but otherwise keys are unchanged.
+	// In "yaml" mode, keys are lowercased to emulate gopkg.in/yaml.v2.
+	Flavor string `yaml:"flavor"`
 }
 
 type Config struct {
@@ -56,11 +63,28 @@ func (c Config) PackageConfig(packagePath string) *PackageConfig {
 			if pc.Indent == "" {
 				pc.Indent = "  "
 			}
+
+			var err error
+			pc.Flavor, err = normalizeFlavor(pc.Flavor)
+			if err != nil {
+				log.Fatalf("Invalid config for package %s: %s", packagePath, err)
+			}
 			return pc
 		}
 	}
 	log.Fatalf("Config not found for package %s", packagePath)
 	return nil
+}
+
+func normalizeFlavor(flavor string) (string, error) {
+	switch flavor {
+	case "", "default":
+		return "default", nil
+	case "yaml":
+		return "yaml", nil
+	default:
+		return "", fmt.Errorf("Unsupported flavor: %s", flavor)
+	}
 }
 
 func (c PackageConfig) IsFileIgnored(pathToFile string) bool {

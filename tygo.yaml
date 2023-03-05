@@ -27,3 +27,4 @@ packages:
     output_path: "./examples/time/index.ts"
   - path: "github.com/gzuidhof/tygo/examples/yaml"
     output_path: "./examples/yaml/index.ts"
+    flavor: "yaml"
