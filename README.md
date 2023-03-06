@@ -276,6 +276,36 @@ export interface ABCD<
 }
 ```
 
+## YAML support
+
+Tygo supports generating typings for YAML-serializable objects that can be understood by Go apps.
+By default, Tygo will respect `yaml` Go struct tags, in addition to `json`, but it will not apply any transformations to untagged fields.
+However, the default behavior of the popular `gopkg.in/yaml.v2` package for Go structs without tags is to downcase the struct field names.
+To emulate this behavior, one can use the `flavor` configuration option:
+
+```yaml
+packages:
+  - path: "github.com/my/package"
+    output_path: "webapp/api/types.ts"
+    flavor: "yaml"
+```
+
+```go
+// Golang input
+type Foo struct {
+	TaggedField string `yaml:"custom_field_name_in_yaml"`
+        UntaggedField string
+}
+```
+
+```typescript
+// Typescript output
+export interface Foo {
+  custom_field_name_in_yaml: string;
+  untaggedfield: string;
+}
+```
+
 ## Related projects
 
 - [**typescriptify-golang-structs**](https://github.com/tkrajina/typescriptify-golang-structs): Probably the most popular choice. The downside of this package is that it relies on reflection rather than parsing, which means that certain things can't be kept such as comments without adding a bunch of tags to your structs. The CLI generates a Go file which is then executed and reflected on, and its library requires you to manually specify all types that should be converted.

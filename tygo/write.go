@@ -200,6 +200,16 @@ func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.F
 
 				optional = jsonTag.HasOption("omitempty")
 			}
+			yamlTag, err := tags.Get("yaml")
+			if err == nil {
+				name = yamlTag.Name
+				if name == "-" {
+					continue
+				}
+
+				optional = yamlTag.HasOption("omitempty")
+			}
+
 			tstypeTag, err := tags.Get("tstype")
 			if err == nil {
 				tstype = tstypeTag.Name
@@ -212,7 +222,11 @@ func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.F
 		}
 
 		if len(name) == 0 {
-			name = fieldName
+			if g.conf.Flavor == "yaml" {
+				name = strings.ToLower(fieldName)
+			} else {
+				name = fieldName
+			}
 		}
 
 		g.writeCommentGroupIfNotNil(s, f.Doc, depth+1)
