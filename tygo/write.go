@@ -36,13 +36,13 @@ func (g *PackageGenerator) writeIndent(s *strings.Builder, depth int) {
 	}
 }
 
-func (g *PackageGenerator) writeType(s *strings.Builder, t ast.Expr, depth int, optionalParens bool) {
+func (g *PackageGenerator) writeType(s *strings.Builder, t ast.Expr, depth int, optionalParens bool, preserveComments bool) {
 	switch t := t.(type) {
 	case *ast.StarExpr:
 		if optionalParens {
 			s.WriteByte('(')
 		}
-		g.writeType(s, t.X, depth, false)
+		g.writeType(s, t.X, depth, false, preserveComments)
 		s.WriteString(" | undefined")
 		if optionalParens {
 			s.WriteByte(')')
@@ -52,11 +52,11 @@ func (g *PackageGenerator) writeType(s *strings.Builder, t ast.Expr, depth int, 
 			s.WriteString("string")
 			break
 		}
-		g.writeType(s, t.Elt, depth, true)
+		g.writeType(s, t.Elt, depth, true, preserveComments)
 		s.WriteString("[]")
 	case *ast.StructType:
 		s.WriteString("{\n")
-		g.writeStructFields(s, t.Fields.List, depth+1)
+		g.writeStructFields(s, t.Fields.List, depth+1, preserveComments)
 		g.writeIndent(s, depth+1)
 		s.WriteByte('}')
 	case *ast.Ident:
@@ -79,50 +79,50 @@ func (g *PackageGenerator) writeType(s *strings.Builder, t ast.Expr, depth int, 
 		}
 	case *ast.MapType:
 		s.WriteString("{ [key: ")
-		g.writeType(s, t.Key, depth, false)
+		g.writeType(s, t.Key, depth, false, preserveComments)
 		s.WriteString("]: ")
-		g.writeType(s, t.Value, depth, false)
+		g.writeType(s, t.Value, depth, false, preserveComments)
 		s.WriteByte('}')
 	case *ast.BasicLit:
 		s.WriteString(t.Value)
 	case *ast.ParenExpr:
 		s.WriteByte('(')
-		g.writeType(s, t.X, depth, false)
+		g.writeType(s, t.X, depth, false, preserveComments)
 		s.WriteByte(')')
 	case *ast.BinaryExpr:
-		g.writeType(s, t.X, depth, false)
+		g.writeType(s, t.X, depth, false, preserveComments)
 		s.WriteByte(' ')
 		s.WriteString(t.Op.String())
 		s.WriteByte(' ')
-		g.writeType(s, t.Y, depth, false)
+		g.writeType(s, t.Y, depth, false, preserveComments)
 	case *ast.InterfaceType:
-		g.writeInterfaceFields(s, t.Methods.List, depth+1)
+		g.writeInterfaceFields(s, t.Methods.List, depth+1, preserveComments)
 	case *ast.CallExpr, *ast.FuncType, *ast.ChanType:
 		s.WriteString(g.conf.FallbackType)
 	case *ast.UnaryExpr:
 		if t.Op == token.TILDE {
 			// We just ignore the tilde token, in Typescript extended types are
 			// put into the generic typing itself, which we can't support yet.
-			g.writeType(s, t.X, depth, false)
+			g.writeType(s, t.X, depth, false, preserveComments)
 		} else {
 			err := fmt.Errorf("unhandled unary expr: %v\n %T", t, t)
 			fmt.Println(err)
 			panic(err)
 		}
 	case *ast.IndexListExpr:
-		g.writeType(s, t.X, depth, false)
+		g.writeType(s, t.X, depth, false, preserveComments)
 		s.WriteByte('<')
 		for i, index := range t.Indices {
-			g.writeType(s, index, depth, false)
+			g.writeType(s, index, depth, false, preserveComments)
 			if i != len(t.Indices)-1 {
 				s.WriteString(", ")
 			}
 		}
 		s.WriteByte('>')
 	case *ast.IndexExpr:
-		g.writeType(s, t.X, depth, false)
+		g.writeType(s, t.X, depth, false, preserveComments)
 		s.WriteByte('<')
-		g.writeType(s, t.Index, depth, false)
+		g.writeType(s, t.Index, depth, false, preserveComments)
 		s.WriteByte('>')
 	default:
 		err := fmt.Errorf("unhandled: %s\n %T", t, t)
@@ -131,13 +131,13 @@ func (g *PackageGenerator) writeType(s *strings.Builder, t ast.Expr, depth int, 
 	}
 }
 
-func (g *PackageGenerator) writeTypeParamsFields(s *strings.Builder, fields []*ast.Field) {
+func (g *PackageGenerator) writeTypeParamsFields(s *strings.Builder, fields []*ast.Field, preserveComments bool) {
 	s.WriteByte('<')
 	for i, f := range fields {
 		for j, ident := range f.Names {
 			s.WriteString(ident.Name)
 			s.WriteString(" extends ")
-			g.writeType(s, f.Type, 0, true)
+			g.writeType(s, f.Type, 0, true, preserveComments)
 
 			if i != len(fields)-1 || j != len(f.Names)-1 {
 				s.WriteString(", ")
@@ -147,7 +147,7 @@ func (g *PackageGenerator) writeTypeParamsFields(s *strings.Builder, fields []*a
 	s.WriteByte('>')
 }
 
-func (g *PackageGenerator) writeInterfaceFields(s *strings.Builder, fields []*ast.Field, depth int) {
+func (g *PackageGenerator) writeInterfaceFields(s *strings.Builder, fields []*ast.Field, depth int, preserveComments bool) {
 	if len(fields) == 0 { // Type without any fields (probably only has methods)
 		s.WriteString(g.conf.FallbackType)
 		return
@@ -157,18 +157,20 @@ func (g *PackageGenerator) writeInterfaceFields(s *strings.Builder, fields []*as
 		if _, isFunc := f.Type.(*ast.FuncType); isFunc {
 			continue
 		}
-		g.writeCommentGroupIfNotNil(s, f.Doc, depth+1)
+		if preserveComments {
+			g.writeCommentGroupIfNotNil(s, f.Doc, depth+1)
+		}
 		g.writeIndent(s, depth+1)
-		g.writeType(s, f.Type, depth, false)
+		g.writeType(s, f.Type, depth, false, preserveComments)
 
-		if f.Comment != nil {
+		if f.Comment != nil && preserveComments {
 			s.WriteString(" // ")
 			s.WriteString(f.Comment.Text())
 		}
 	}
 }
 
-func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.Field, depth int) {
+func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.Field, depth int, preserveComments bool) {
 	for _, f := range fields {
 		// fmt.Println(f.Type)
 		optional := false
@@ -229,7 +231,9 @@ func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.F
 			}
 		}
 
-		g.writeCommentGroupIfNotNil(s, f.Doc, depth+1)
+		if preserveComments {
+			g.writeCommentGroupIfNotNil(s, f.Doc, depth+1)
+		}
 
 		g.writeIndent(s, depth+1)
 		quoted := !validJSName(name)
@@ -257,13 +261,13 @@ func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.F
 		s.WriteString(": ")
 
 		if tstype == "" {
-			g.writeType(s, f.Type, depth, false)
+			g.writeType(s, f.Type, depth, false, preserveComments)
 		} else {
 			s.WriteString(tstype)
 		}
 		s.WriteByte(';')
 
-		if f.Comment != nil {
+		if f.Comment != nil && preserveComments {
 			// Line comment is present, that means a comment after the field.
 			s.WriteString(" // ")
 			s.WriteString(f.Comment.Text())

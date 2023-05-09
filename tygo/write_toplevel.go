@@ -15,7 +15,7 @@ type groupContext struct {
 	iotaOffset           int
 }
 
-func (g *PackageGenerator) writeGroupDecl(s *strings.Builder, decl *ast.GenDecl) {
+func (g *PackageGenerator) writeGroupDecl(s *strings.Builder, decl *ast.GenDecl, preserveGroupComments bool, preserveTypeComments bool) {
 	// This checks whether the declaration is a group declaration like:
 	// const (
 	// 	  X = 3
@@ -23,7 +23,7 @@ func (g *PackageGenerator) writeGroupDecl(s *strings.Builder, decl *ast.GenDecl)
 	// )
 	isGroupedDeclaration := len(decl.Specs) > 1
 
-	if !isGroupedDeclaration {
+	if !isGroupedDeclaration && preserveGroupComments {
 		g.writeCommentGroupIfNotNil(s, decl.Doc, 0)
 	}
 
@@ -45,21 +45,21 @@ func (g *PackageGenerator) writeGroupDecl(s *strings.Builder, decl *ast.GenDecl)
 	}
 
 	for _, spec := range decl.Specs {
-		g.writeSpec(s, spec, group)
+		g.writeSpec(s, spec, group, preserveTypeComments)
 	}
 }
 
-func (g *PackageGenerator) writeSpec(s *strings.Builder, spec ast.Spec, group *groupContext) {
+func (g *PackageGenerator) writeSpec(s *strings.Builder, spec ast.Spec, group *groupContext, preserveComments bool) {
 	// e.g. "type Foo struct {}" or "type Bar = string"
 	ts, ok := spec.(*ast.TypeSpec)
 	if ok && ts.Name.IsExported() {
-		g.writeTypeSpec(s, ts, group)
+		g.writeTypeSpec(s, ts, group, preserveComments)
 	}
 
 	// e.g. "const Foo = 123"
 	vs, ok := spec.(*ast.ValueSpec)
 	if ok {
-		g.writeValueSpec(s, vs, group)
+		g.writeValueSpec(s, vs, group, preserveComments)
 	}
 }
 
@@ -67,10 +67,10 @@ func (g *PackageGenerator) writeSpec(s *strings.Builder, spec ast.Spec, group *g
 // `type X struct { ... }`
 // or
 // `type Bar = string`
-func (g *PackageGenerator) writeTypeSpec(s *strings.Builder, ts *ast.TypeSpec, group *groupContext) {
-	if ts.Doc != nil { // The spec has its own comment, which overrules the grouped comment.
+func (g *PackageGenerator) writeTypeSpec(s *strings.Builder, ts *ast.TypeSpec, group *groupContext, preserveComments bool) {
+	if ts.Doc != nil && preserveComments { // The spec has its own comment, which overrules the grouped comment.
 		g.writeCommentGroup(s, ts.Doc, 0)
-	} else if group.isGroupedDeclaration {
+	} else if group.isGroupedDeclaration && preserveComments {
 		g.writeCommentGroupIfNotNil(s, group.doc, 0)
 	}
 
@@ -80,11 +80,11 @@ func (g *PackageGenerator) writeTypeSpec(s *strings.Builder, ts *ast.TypeSpec, g
 		s.WriteString(ts.Name.Name)
 
 		if ts.TypeParams != nil {
-			g.writeTypeParamsFields(s, ts.TypeParams.List)
+			g.writeTypeParamsFields(s, ts.TypeParams.List, preserveComments)
 		}
 
 		s.WriteString(" {\n")
-		g.writeStructFields(s, st.Fields.List, 0)
+		g.writeStructFields(s, st.Fields.List, 0, preserveComments)
 		s.WriteString("}")
 	}
 
@@ -101,21 +101,21 @@ func (g *PackageGenerator) writeTypeSpec(s *strings.Builder, ts *ast.TypeSpec, g
 		s.WriteString("export type ")
 		s.WriteString(ts.Name.Name)
 		s.WriteString(" = ")
-		g.writeType(s, ts.Type, 0, true)
+		g.writeType(s, ts.Type, 0, true, preserveComments)
 		s.WriteString(";")
 
 	}
 
-	if ts.Comment != nil {
+	if ts.Comment != nil && preserveComments {
 		s.WriteString(" // " + ts.Comment.Text())
 	} else {
 		s.WriteString("\n")
 	}
 }
 
-// Writign of value specs, which are exported const expressions like
+// Writing of value specs, which are exported const expressions like
 // const SomeValue = 3
-func (g *PackageGenerator) writeValueSpec(s *strings.Builder, vs *ast.ValueSpec, group *groupContext) {
+func (g *PackageGenerator) writeValueSpec(s *strings.Builder, vs *ast.ValueSpec, group *groupContext, preserveComments bool) {
 	for i, name := range vs.Names {
 		group.iotaValue = group.iotaValue + 1
 		if name.Name == "_" {
@@ -125,9 +125,9 @@ func (g *PackageGenerator) writeValueSpec(s *strings.Builder, vs *ast.ValueSpec,
 			continue
 		}
 
-		if vs.Doc != nil { // The spec has its own comment, which overrules the grouped comment.
+		if vs.Doc != nil && preserveComments { // The spec has its own comment, which overrules the grouped comment.
 			g.writeCommentGroup(s, vs.Doc, 0)
-		} else if group.isGroupedDeclaration {
+		} else if group.isGroupedDeclaration && preserveComments {
 			g.writeCommentGroupIfNotNil(s, group.doc, 0)
 		}
 
@@ -142,7 +142,7 @@ func (g *PackageGenerator) writeValueSpec(s *strings.Builder, vs *ast.ValueSpec,
 			s.WriteString(": ")
 
 			tempSB := &strings.Builder{}
-			g.writeType(tempSB, vs.Type, 0, true)
+			g.writeType(tempSB, vs.Type, 0, true, preserveComments)
 			typeString := tempSB.String()
 
 			s.WriteString(typeString)
@@ -157,7 +157,7 @@ func (g *PackageGenerator) writeValueSpec(s *strings.Builder, vs *ast.ValueSpec,
 		if hasExplicitValue {
 			val := vs.Values[i]
 			tempSB := &strings.Builder{}
-			g.writeType(tempSB, val, 0, true)
+			g.writeType(tempSB, val, 0, true, preserveComments)
 			valueString := tempSB.String()
 
 			if isProbablyIotaType(valueString) {
@@ -178,7 +178,7 @@ func (g *PackageGenerator) writeValueSpec(s *strings.Builder, vs *ast.ValueSpec,
 		}
 
 		s.WriteByte(';')
-		if vs.Comment != nil {
+		if vs.Comment != nil && preserveComments {
 			s.WriteString(" // " + vs.Comment.Text())
 		} else {
 			s.WriteByte('\n')

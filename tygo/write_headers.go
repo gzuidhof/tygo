@@ -16,12 +16,12 @@ func (g *PackageGenerator) writeFileFrontmatter(w *strings.Builder) {
 	}
 }
 
-func (g *PackageGenerator) writeFileSourceHeader(w *strings.Builder, path string, file *ast.File) {
+func (g *PackageGenerator) writeFileSourceHeader(w *strings.Builder, path string, file *ast.File, preserveDocComment bool) {
 	w.WriteString("\n//////////\n// source: ")
 	w.WriteString(filepath.Base(path))
 	w.WriteString("\n")
 
-	if file.Doc != nil {
+	if file.Doc != nil && preserveDocComment {
 		w.WriteString("/*\n")
 		w.WriteString(file.Doc.Text())
 		w.WriteString("*/\n")

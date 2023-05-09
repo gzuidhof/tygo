@@ -42,6 +42,14 @@ type PackageConfig struct {
 	// In "default" mode, `json` and `yaml` tags are respected, but otherwise keys are unchanged.
 	// In "yaml" mode, keys are lowercased to emulate gopkg.in/yaml.v2.
 	Flavor string `yaml:"flavor"`
+
+	// PreserveComments is an option to preserve comments in the generated TypeScript output.
+	// Supported values: "default", "" (same as "default"), "types", "none".
+	// By "default", package-level comments as well as type comments are
+	// preserved.
+	// In "types" mode, only type comments are preserved.
+	// If "none" is supplied, no comments are preserved.
+	PreserveComments string `yaml:"preserve_comments"`
 }
 
 type Config struct {
@@ -69,6 +77,11 @@ func (c Config) PackageConfig(packagePath string) *PackageConfig {
 			if err != nil {
 				log.Fatalf("Invalid config for package %s: %s", packagePath, err)
 			}
+
+			pc.PreserveComments, err = normalizePreserveComments(pc.PreserveComments)
+			if err != nil {
+				log.Fatalf("Invalid config for package %s: %s", packagePath, err)
+			}
 			return pc
 		}
 	}
@@ -83,7 +96,20 @@ func normalizeFlavor(flavor string) (string, error) {
 	case "yaml":
 		return "yaml", nil
 	default:
-		return "", fmt.Errorf("Unsupported flavor: %s", flavor)
+		return "", fmt.Errorf("unsupported flavor: %s", flavor)
+	}
+}
+
+func normalizePreserveComments(preserveComments string) (string, error) {
+	switch preserveComments {
+	case "", "default":
+		return "default", nil
+	case "types":
+		return "types", nil
+	case "none":
+		return "none", nil
+	default:
+		return "", fmt.Errorf("unsupported preserve_comments: %s", preserveComments)
 	}
 }
 
