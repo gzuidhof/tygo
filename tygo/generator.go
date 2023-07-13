@@ -73,7 +73,7 @@ func (g *Tygo) Generate() error {
 			return nil
 		}
 
-		err = ioutil.WriteFile(outPath, []byte(code), os.ModePerm)
+		err = ioutil.WriteFile(outPath, []byte(code), 0664)
 		if err != nil {
 			return nil
 		}
