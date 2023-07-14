@@ -31,14 +31,11 @@ func (g *PackageGenerator) Generate() (string, error) {
 				}
 
 				if first {
-					preserveDocComments := g.conf.PreserveComments == "default"
-					g.writeFileSourceHeader(s, filepaths[i], file, preserveDocComments)
+					g.writeFileSourceHeader(s, filepaths[i], file, g.PreserveDocComments())
 					first = false
 				}
 
-				preserveGroupComments := g.conf.PreserveComments == "default"
-				preserveTypeComments := g.conf.PreserveComments == "default" || g.conf.PreserveComments == "types"
-				g.writeGroupDecl(s, x, preserveGroupComments, preserveTypeComments)
+				g.writeGroupDecl(s, x)
 				return false
 			}
 			return true
