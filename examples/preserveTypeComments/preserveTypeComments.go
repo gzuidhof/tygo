@@ -11,10 +11,9 @@ import "github.com/google/uuid"
 type UserRole = string
 
 const (
-	// UserRoleDefault is "viewer"
+	// const comments are kept, unless configured to "none"
 	UserRoleDefault UserRole = "viewer"
-	// UserRoleEditor can edit other users
-	UserRoleEditor UserRole = "editor" // Line comments are preserved by default. With preserveComments configured to "types", it won't be preserved.
+	UserRoleEditor  UserRole = "editor" // Line comments are preserved by default. With preserveComments configured to "types", it won't be preserved.
 )
 
 type User struct {

@@ -8,12 +8,9 @@
  */
 export type UserRole = string;
 /**
- * UserRoleDefault is "viewer"
+ * const comments are kept, unless configured to "none"
  */
 export const UserRoleDefault: UserRole = "viewer";
-/**
- * UserRoleEditor can edit other users
- */
 export const UserRoleEditor: UserRole = "editor";
 export interface User {
   /**
