@@ -31,7 +31,7 @@ func (g *PackageGenerator) Generate() (string, error) {
 				}
 
 				if first {
-					g.writeFileSourceHeader(s, filepaths[i], file, g.PreserveDocComments())
+					g.writeFileSourceHeader(s, filepaths[i], file)
 					first = false
 				}
 
