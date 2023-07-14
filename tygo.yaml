@@ -20,6 +20,9 @@ packages:
   - path: "github.com/gzuidhof/tygo/examples/preserveTypeComments"
     fallback_type: unknown
     preserve_comments: "types"
+  - path: "github.com/gzuidhof/tygo/examples/noComments"
+    fallback_type: unknown
+    preserve_comments: "none"
   # Generate the "net/http" output example, note the output is in gitignore as it's pretty big
   - path: "net/http"
     output_path: "./examples/http/index.ts"

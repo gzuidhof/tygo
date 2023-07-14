@@ -7,11 +7,11 @@ import "github.com/google/uuid"
 // This is a block comment in the package body. By default, it is preserved.
 // With preserveComments configured to "types", it won't be preserved.
 
-// Type comments are kept, unless configured to "none"
+// Type comments are preserved, unless configured to "none"
 type UserRole = string
 
 const (
-	// const comments are kept, unless configured to "none"
+	// Const comments are preserved, unless configured to "none"
 	UserRoleDefault UserRole = "viewer"
 	UserRoleEditor  UserRole = "editor" // Line comments are preserved by default. With preserveComments configured to "types", it won't be preserved.
 )

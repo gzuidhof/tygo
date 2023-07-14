@@ -4,11 +4,11 @@
 // source: preserveTypeComments.go
 
 /**
- * Type comments are kept, unless configured to "none"
+ * Type comments are preserved, unless configured to "none"
  */
 export type UserRole = string;
 /**
- * const comments are kept, unless configured to "none"
+ * Const comments are preserved, unless configured to "none"
  */
 export const UserRoleDefault: UserRole = "viewer";
 export const UserRoleEditor: UserRole = "editor";
