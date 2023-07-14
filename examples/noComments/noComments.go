@@ -13,7 +13,7 @@ type UserRole = string
 const (
 	// Const comments are preserved by default or with "types". It won't be preserved with "none"
 	UserRoleDefault UserRole = "viewer"
-	UserRoleEditor  UserRole = "editor" // Line comments are preserved by default. With preserveComments configured to "types", it won't be preserved.
+	UserRoleEditor  UserRole = "editor" // Line comments are preserved by default. With preserveComments configured to "none", it won't be preserved.
 )
 
 type User struct {
