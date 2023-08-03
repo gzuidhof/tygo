@@ -21,7 +21,7 @@ func (g *PackageGenerator) writeFileSourceHeader(w *strings.Builder, path string
 	w.WriteString(filepath.Base(path))
 	w.WriteString("\n")
 
-	if file.Doc != nil {
+	if file.Doc != nil && g.PreserveDocComments() {
 		w.WriteString("/*\n")
 		w.WriteString(file.Doc.Text())
 		w.WriteString("*/\n")

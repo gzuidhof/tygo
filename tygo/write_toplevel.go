@@ -23,7 +23,7 @@ func (g *PackageGenerator) writeGroupDecl(s *strings.Builder, decl *ast.GenDecl)
 	// )
 	isGroupedDeclaration := len(decl.Specs) > 1
 
-	if !isGroupedDeclaration {
+	if !isGroupedDeclaration && g.PreserveTypeComments() {
 		g.writeCommentGroupIfNotNil(s, decl.Doc, 0)
 	}
 
@@ -68,9 +68,9 @@ func (g *PackageGenerator) writeSpec(s *strings.Builder, spec ast.Spec, group *g
 // or
 // `type Bar = string`
 func (g *PackageGenerator) writeTypeSpec(s *strings.Builder, ts *ast.TypeSpec, group *groupContext) {
-	if ts.Doc != nil { // The spec has its own comment, which overrules the grouped comment.
+	if ts.Doc != nil && g.PreserveTypeComments() { // The spec has its own comment, which overrules the grouped comment.
 		g.writeCommentGroup(s, ts.Doc, 0)
-	} else if group.isGroupedDeclaration {
+	} else if group.isGroupedDeclaration && g.PreserveTypeComments() {
 		g.writeCommentGroupIfNotNil(s, group.doc, 0)
 	}
 
@@ -106,14 +106,14 @@ func (g *PackageGenerator) writeTypeSpec(s *strings.Builder, ts *ast.TypeSpec, g
 
 	}
 
-	if ts.Comment != nil {
+	if ts.Comment != nil && g.PreserveTypeComments() {
 		s.WriteString(" // " + ts.Comment.Text())
 	} else {
 		s.WriteString("\n")
 	}
 }
 
-// Writign of value specs, which are exported const expressions like
+// Writing of value specs, which are exported const expressions like
 // const SomeValue = 3
 func (g *PackageGenerator) writeValueSpec(s *strings.Builder, vs *ast.ValueSpec, group *groupContext) {
 	for i, name := range vs.Names {
@@ -125,9 +125,9 @@ func (g *PackageGenerator) writeValueSpec(s *strings.Builder, vs *ast.ValueSpec,
 			continue
 		}
 
-		if vs.Doc != nil { // The spec has its own comment, which overrules the grouped comment.
+		if vs.Doc != nil && g.PreserveTypeComments() { // The spec has its own comment, which overrules the grouped comment.
 			g.writeCommentGroup(s, vs.Doc, 0)
-		} else if group.isGroupedDeclaration {
+		} else if group.isGroupedDeclaration && g.PreserveTypeComments() {
 			g.writeCommentGroupIfNotNil(s, group.doc, 0)
 		}
 
@@ -178,7 +178,7 @@ func (g *PackageGenerator) writeValueSpec(s *strings.Builder, vs *ast.ValueSpec,
 		}
 
 		s.WriteByte(';')
-		if vs.Comment != nil {
+		if vs.Comment != nil && g.PreserveDocComments() {
 			s.WriteString(" // " + vs.Comment.Text())
 		} else {
 			s.WriteByte('\n')

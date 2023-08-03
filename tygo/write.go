@@ -157,11 +157,13 @@ func (g *PackageGenerator) writeInterfaceFields(s *strings.Builder, fields []*as
 		if _, isFunc := f.Type.(*ast.FuncType); isFunc {
 			continue
 		}
-		g.writeCommentGroupIfNotNil(s, f.Doc, depth+1)
+		if g.PreserveTypeComments() {
+			g.writeCommentGroupIfNotNil(s, f.Doc, depth+1)
+		}
 		g.writeIndent(s, depth+1)
 		g.writeType(s, f.Type, depth, false)
 
-		if f.Comment != nil {
+		if f.Comment != nil && g.PreserveTypeComments() {
 			s.WriteString(" // ")
 			s.WriteString(f.Comment.Text())
 		}
@@ -229,7 +231,9 @@ func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.F
 			}
 		}
 
-		g.writeCommentGroupIfNotNil(s, f.Doc, depth+1)
+		if g.PreserveTypeComments() {
+			g.writeCommentGroupIfNotNil(s, f.Doc, depth+1)
+		}
 
 		g.writeIndent(s, depth+1)
 		quoted := !validJSName(name)
@@ -263,7 +267,7 @@ func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.F
 		}
 		s.WriteByte(';')
 
-		if f.Comment != nil {
+		if f.Comment != nil && g.PreserveTypeComments() {
 			// Line comment is present, that means a comment after the field.
 			s.WriteString(" // ")
 			s.WriteString(f.Comment.Text())

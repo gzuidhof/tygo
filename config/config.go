@@ -9,6 +9,7 @@ import (
 )
 
 const defaultFallbackType = "any"
+const defaultPreserveComments = "default"
 
 func ReadFromFilepath(cfgFilepath string) tygo.Config {
 	b, err := ioutil.ReadFile(cfgFilepath)
@@ -25,6 +26,10 @@ func ReadFromFilepath(cfgFilepath string) tygo.Config {
 	for _, packageConf := range conf.Packages {
 		if packageConf.FallbackType == "" {
 			packageConf.FallbackType = defaultFallbackType
+		}
+
+		if packageConf.PreserveComments == "" {
+			packageConf.PreserveComments = defaultPreserveComments
 		}
 	}
 

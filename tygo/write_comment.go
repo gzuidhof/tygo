@@ -5,6 +5,14 @@ import (
 	"strings"
 )
 
+func (g *PackageGenerator) PreserveDocComments() bool {
+	return g.conf.PreserveComments == "default"
+}
+
+func (g *PackageGenerator) PreserveTypeComments() bool {
+	return g.conf.PreserveComments == "types" || g.conf.PreserveComments == "default"
+}
+
 func (g *PackageGenerator) writeCommentGroupIfNotNil(s *strings.Builder, f *ast.CommentGroup, depth int) {
 	if f != nil {
 		g.writeCommentGroup(s, f, depth)
