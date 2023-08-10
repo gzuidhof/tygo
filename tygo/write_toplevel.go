@@ -175,11 +175,7 @@ func (g *PackageGenerator) writeTypeInheritanceSpec(s *strings.Builder, fields [
 				}
 			}
 
-			if !valid {
-				continue
-			}
-
-			if f.Tag == nil {
+			if !valid || f.Tag == nil {
 				continue
 			}
 
