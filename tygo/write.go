@@ -2,11 +2,10 @@ package tygo
 
 import (
 	"fmt"
-	"regexp"
-	"strings"
-
 	"go/ast"
 	"go/token"
+	"regexp"
+	"strings"
 
 	"github.com/fatih/structtag"
 )
@@ -36,7 +35,12 @@ func (g *PackageGenerator) writeIndent(s *strings.Builder, depth int) {
 	}
 }
 
-func (g *PackageGenerator) writeType(s *strings.Builder, t ast.Expr, depth int, optionalParens bool) {
+func (g *PackageGenerator) writeType(
+	s *strings.Builder,
+	t ast.Expr,
+	depth int,
+	optionalParens bool,
+) {
 	switch t := t.(type) {
 	case *ast.StarExpr:
 		if optionalParens {
@@ -147,7 +151,11 @@ func (g *PackageGenerator) writeTypeParamsFields(s *strings.Builder, fields []*a
 	s.WriteByte('>')
 }
 
-func (g *PackageGenerator) writeInterfaceFields(s *strings.Builder, fields []*ast.Field, depth int) {
+func (g *PackageGenerator) writeInterfaceFields(
+	s *strings.Builder,
+	fields []*ast.Field,
+	depth int,
+) {
 	if len(fields) == 0 { // Type without any fields (probably only has methods)
 		s.WriteString(g.conf.FallbackType)
 		return
@@ -196,7 +204,7 @@ func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.F
 			jsonTag, err := tags.Get("json")
 			if err == nil {
 				name = jsonTag.Name
-				if name == "-" {
+				if name == "-" || jsonTag.HasOption("inline") {
 					continue
 				}
 
@@ -205,7 +213,7 @@ func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.F
 			yamlTag, err := tags.Get("yaml")
 			if err == nil {
 				name = yamlTag.Name
-				if name == "-" {
+				if name == "-" || yamlTag.HasOption("inline") {
 					continue
 				}
 
@@ -215,7 +223,7 @@ func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.F
 			tstypeTag, err := tags.Get("tstype")
 			if err == nil {
 				tstype = tstypeTag.Name
-				if tstype == "-" {
+				if tstype == "-" || tstypeTag.HasOption("inline") {
 					continue
 				}
 				required = tstypeTag.HasOption("required")

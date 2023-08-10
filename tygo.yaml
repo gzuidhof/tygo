@@ -11,10 +11,16 @@ packages:
     indent: "  "
     exclude_files:
       - "excluded.go"
-    frontmatter: | # We can define some additional text to put at the start of the file.
+    frontmatter:
+      | # We can define some additional text to put at the start of the file.
       export type Something = string | number;
   - path: "github.com/gzuidhof/tygo/examples/simple"
     fallback_type: unknown
+  - path: "github.com/gzuidhof/tygo/examples/inheritance"
+    fallback_type: unknown
+    frontmatter:
+      | # We can define some additional text to put at the start of the file.
+      import * as bookapp from "../bookstore"
   - path: "github.com/gzuidhof/tygo/examples/generic"
     fallback_type: unknown
   - path: "github.com/gzuidhof/tygo/examples/preserveTypeComments"

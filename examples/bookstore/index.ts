@@ -7,6 +7,9 @@ export interface AuthorBookListing {
   author_name: string;
   written_books: Book[];
 }
+export interface AuthorWithInheritance<T extends number /* int */> {
+  id: T;
+}
 
 //////////
 // source: book.go

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"go/ast"
 	"strings"
+
+	"github.com/fatih/structtag"
 )
 
 type groupContext struct {
@@ -67,8 +69,13 @@ func (g *PackageGenerator) writeSpec(s *strings.Builder, spec ast.Spec, group *g
 // `type X struct { ... }`
 // or
 // `type Bar = string`
-func (g *PackageGenerator) writeTypeSpec(s *strings.Builder, ts *ast.TypeSpec, group *groupContext) {
-	if ts.Doc != nil && g.PreserveTypeComments() { // The spec has its own comment, which overrules the grouped comment.
+func (g *PackageGenerator) writeTypeSpec(
+	s *strings.Builder,
+	ts *ast.TypeSpec,
+	group *groupContext,
+) {
+	if ts.Doc != nil &&
+		g.PreserveTypeComments() { // The spec has its own comment, which overrules the grouped comment.
 		g.writeCommentGroup(s, ts.Doc, 0)
 	} else if group.isGroupedDeclaration && g.PreserveTypeComments() {
 		g.writeCommentGroupIfNotNil(s, group.doc, 0)
@@ -82,6 +89,8 @@ func (g *PackageGenerator) writeTypeSpec(s *strings.Builder, ts *ast.TypeSpec, g
 		if ts.TypeParams != nil {
 			g.writeTypeParamsFields(s, ts.TypeParams.List)
 		}
+
+		g.writeTypeInheritanceSpec(s, st.Fields.List)
 
 		s.WriteString(" {\n")
 		g.writeStructFields(s, st.Fields.List, 0)
@@ -113,9 +122,104 @@ func (g *PackageGenerator) writeTypeSpec(s *strings.Builder, ts *ast.TypeSpec, g
 	}
 }
 
+// Writing of type inheritance specs, which are expressions like
+// `type X struct {  }`
+// `type Y struct { X `tstype:",inline"` }`
+// `export interface Y extends X { }`
+func (g *PackageGenerator) writeTypeInheritanceSpec(s *strings.Builder, fields []*ast.Field) {
+	inheritances := make([]string, 0)
+	for _, f := range fields {
+		if f.Type != nil {
+			valid := false
+			name := ""
+
+			switch ft := f.Type.(type) {
+			case *ast.Ident:
+				if ft.Obj == nil || ft.Obj.Decl == nil {
+					continue
+				}
+				dcl, ok := ft.Obj.Decl.(*ast.TypeSpec)
+				if ok {
+					_, isStruct := dcl.Type.(*ast.StructType)
+					valid = isStruct && dcl.Name.IsExported()
+					name = dcl.Name.Name
+				}
+			case *ast.IndexExpr:
+				typeExpr, ok := ft.X.(*ast.Ident)
+				if ok && typeExpr.Obj != nil && typeExpr.Obj.Decl != nil {
+					dcl, ok := typeExpr.Obj.Decl.(*ast.TypeSpec)
+					if ok {
+						_, isStruct := dcl.Type.(*ast.StructType)
+						valid = isStruct && dcl.Name.IsExported()
+						if valid {
+							generic := getIdent(ft.Index.(*ast.Ident).Name)
+							name = fmt.Sprintf("%s<%s>", dcl.Name.Name, generic)
+						}
+					}
+				}
+			case *ast.IndexListExpr:
+				typeExpr, ok := ft.X.(*ast.Ident)
+				if ok && typeExpr.Obj != nil && typeExpr.Obj.Decl != nil {
+					dcl, ok := typeExpr.Obj.Decl.(*ast.TypeSpec)
+					if ok {
+						_, isStruct := dcl.Type.(*ast.StructType)
+						valid = isStruct && dcl.Name.IsExported()
+						if valid {
+							generic := ""
+							for _, index := range ft.Indices {
+								generic += fmt.Sprintf("%s, ", getIdent(index.(*ast.Ident).Name))
+							}
+							name = fmt.Sprintf("%s<%s>", dcl.Name.Name, generic[:len(generic)-2])
+						}
+					}
+				}
+			}
+
+			if !valid {
+				continue
+			}
+
+			if f.Tag == nil {
+				continue
+			}
+
+			tags, err := structtag.Parse(f.Tag.Value[1 : len(f.Tag.Value)-1])
+			if err != nil {
+				panic(err)
+			}
+			isInherited := false
+			tstypeTag, err := tags.Get("tstype")
+			if err == nil && tstypeTag.HasOption("inline") {
+				isInherited = true
+			}
+			jsonTag, err := tags.Get("json")
+			if err == nil && jsonTag.HasOption("inline") {
+				isInherited = true
+			}
+			yamlTag, err := tags.Get("yaml")
+			if err == nil && yamlTag.HasOption("inline") {
+				isInherited = true
+			}
+
+			if isInherited {
+				inheritances = append(inheritances, name)
+			}
+		}
+	}
+
+	if len(inheritances) > 0 {
+		s.WriteString(" extends ")
+		s.WriteString(strings.Join(inheritances, ", "))
+	}
+}
+
 // Writing of value specs, which are exported const expressions like
 // const SomeValue = 3
-func (g *PackageGenerator) writeValueSpec(s *strings.Builder, vs *ast.ValueSpec, group *groupContext) {
+func (g *PackageGenerator) writeValueSpec(
+	s *strings.Builder,
+	vs *ast.ValueSpec,
+	group *groupContext,
+) {
 	for i, name := range vs.Names {
 		group.iotaValue = group.iotaValue + 1
 		if name.Name == "_" {
@@ -125,7 +229,8 @@ func (g *PackageGenerator) writeValueSpec(s *strings.Builder, vs *ast.ValueSpec,
 			continue
 		}
 
-		if vs.Doc != nil && g.PreserveTypeComments() { // The spec has its own comment, which overrules the grouped comment.
+		if vs.Doc != nil &&
+			g.PreserveTypeComments() { // The spec has its own comment, which overrules the grouped comment.
 			g.writeCommentGroup(s, vs.Doc, 0)
 		} else if group.isGroupedDeclaration && g.PreserveTypeComments() {
 			g.writeCommentGroupIfNotNil(s, group.doc, 0)
