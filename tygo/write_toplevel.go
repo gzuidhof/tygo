@@ -129,80 +129,22 @@ func (g *PackageGenerator) writeTypeSpec(
 func (g *PackageGenerator) writeTypeInheritanceSpec(s *strings.Builder, fields []*ast.Field) {
 	inheritances := make([]string, 0)
 	for _, f := range fields {
-		if f.Type != nil {
-			valid := false
-			name := ""
-
-			switch ft := f.Type.(type) {
-			case *ast.Ident:
-				if ft.Obj == nil || ft.Obj.Decl == nil {
-					continue
-				}
-				dcl, ok := ft.Obj.Decl.(*ast.TypeSpec)
-				if ok {
-					_, isStruct := dcl.Type.(*ast.StructType)
-					valid = isStruct && dcl.Name.IsExported()
-					name = dcl.Name.Name
-				}
-			case *ast.IndexExpr:
-				typeExpr, ok := ft.X.(*ast.Ident)
-				if ok && typeExpr.Obj != nil && typeExpr.Obj.Decl != nil {
-					dcl, ok := typeExpr.Obj.Decl.(*ast.TypeSpec)
-					if ok {
-						_, isStruct := dcl.Type.(*ast.StructType)
-						valid = isStruct && dcl.Name.IsExported()
-						if valid {
-							generic := getIdent(ft.Index.(*ast.Ident).Name)
-							name = fmt.Sprintf("%s<%s>", dcl.Name.Name, generic)
-						}
-					}
-				}
-			case *ast.IndexListExpr:
-				typeExpr, ok := ft.X.(*ast.Ident)
-				if ok && typeExpr.Obj != nil && typeExpr.Obj.Decl != nil {
-					dcl, ok := typeExpr.Obj.Decl.(*ast.TypeSpec)
-					if ok {
-						_, isStruct := dcl.Type.(*ast.StructType)
-						valid = isStruct && dcl.Name.IsExported()
-						if valid {
-							generic := ""
-							for _, index := range ft.Indices {
-								generic += fmt.Sprintf("%s, ", getIdent(index.(*ast.Ident).Name))
-							}
-							name = fmt.Sprintf("%s<%s>", dcl.Name.Name, generic[:len(generic)-2])
-						}
-					}
-				}
-			}
-
-			if !valid || f.Tag == nil {
-				continue
-			}
-
+		if f.Type != nil && f.Tag != nil {
 			tags, err := structtag.Parse(f.Tag.Value[1 : len(f.Tag.Value)-1])
 			if err != nil {
 				panic(err)
 			}
-			isInherited := false
-			tstypeTag, err := tags.Get("tstype")
-			if err == nil && tstypeTag.HasOption("inline") {
-				isInherited = true
-			}
-			jsonTag, err := tags.Get("json")
-			if err == nil && jsonTag.HasOption("inline") {
-				isInherited = true
-			}
-			yamlTag, err := tags.Get("yaml")
-			if err == nil && yamlTag.HasOption("inline") {
-				isInherited = true
+
+			if !isInherited(tags) {
+				continue
 			}
 
-			if isInherited {
+			name, valid := getInheritedType(f.Type)
+			if valid {
 				inheritances = append(inheritances, name)
 			}
 		}
 	}
-
 	if len(inheritances) > 0 {
 		s.WriteString(" extends ")
 		s.WriteString(strings.Join(inheritances, ", "))
@@ -286,4 +228,57 @@ func (g *PackageGenerator) writeValueSpec(
 		}
 
 	}
+}
+
+func getInheritedType(f ast.Expr) (name string, valid bool) {
+	switch ft := f.(type) {
+	case *ast.Ident:
+		if ft.Obj != nil && ft.Obj.Decl != nil {
+			dcl, ok := ft.Obj.Decl.(*ast.TypeSpec)
+			if ok {
+				_, isStruct := dcl.Type.(*ast.StructType)
+				valid = isStruct && dcl.Name.IsExported()
+				name = dcl.Name.Name
+				break
+			}
+		}
+	case *ast.IndexExpr:
+		name, valid = getInheritedType(ft.X)
+		if valid {
+			generic := getIdent(ft.Index.(*ast.Ident).Name)
+			name += fmt.Sprintf("<%s>", generic)
+			break
+		}
+	case *ast.IndexListExpr:
+		name, valid = getInheritedType(ft.X)
+		if valid {
+			generic := ""
+			for _, index := range ft.Indices {
+				generic += fmt.Sprintf("%s, ", getIdent(index.(*ast.Ident).Name))
+			}
+			name += fmt.Sprintf("<%s>", generic[:len(generic)-2])
+			break
+		}
+	case *ast.SelectorExpr:
+		valid = ft.Sel.IsExported()
+		name = fmt.Sprintf("%s.%s", ft.X, ft.Sel)
+
+	}
+	return
+}
+
+func isInherited(tags *structtag.Tags) bool {
+	tstypeTag, err := tags.Get("tstype")
+	if err == nil && tstypeTag.HasOption("inline") {
+		return true
+	}
+	jsonTag, err := tags.Get("json")
+	if err == nil && jsonTag.HasOption("inline") {
+		return true
+	}
+	yamlTag, err := tags.Get("yaml")
+	if err == nil && yamlTag.HasOption("inline") {
+		return true
+	}
+	return false
 }

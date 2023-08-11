@@ -22,8 +22,13 @@ type Book struct {
 	// ISBN identifier of the book, null if not known.
 	ISBN ISBN `json:"isbn"`
 
-	Genre    string    `json:"genre" tstype:"'novel' | 'crime' | 'fantasy'"`
+	Genre    string    `json:"genre"    tstype:"'novel' | 'crime' | 'fantasy'"`
 	Chapters []Chapter `json:"chapters"`
 
 	PublishedAt *time.Time `json:"published_at"`
+}
+
+type TextBook[T int] struct {
+	Book  `  tstype:",inline"`
+	Pages T `                 json:"pages"`
 }

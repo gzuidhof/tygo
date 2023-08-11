@@ -14,7 +14,7 @@ export interface Base3<T extends string, X extends number /* int */> {
   class: T;
   level: X;
 }
-export interface Other<T extends number /* int */, X extends string> extends Base, Base2<T>, Base3<X, T> {
+export interface Other<T extends number /* int */, X extends string> extends Base, Base2<T>, Base3<X, T>, bookapp.Book, bookapp.TextBook<T> {
   otherWithBase: Base;
   otherWithBase2: Base2<X>;
   otherValue: string;

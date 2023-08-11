@@ -36,3 +36,6 @@ export interface Book {
   chapters: Chapter[];
   published_at?: string /* RFC 3339 formatted */;
 }
+export interface TextBook<T extends number /* int */> extends Book {
+  pages: T;
+}

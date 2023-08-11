@@ -16,11 +16,13 @@ type Base3[T string, X int] struct {
 }
 
 type Other[T int, X string] struct {
-	Base           `tstype:",inline"`
-	Base2[T]       ` json:",inline"`
-	Base3[X, T]    `  yaml:",inline"`
-	OtherWithBase  Base                             `                                          json:"otherWithBase"`
-	OtherWithBase2 Base2[X]                         `                                          json:"otherWithBase2"`
-	OtherValue     string                           `                                          json:"otherValue"`
-	Author         bookapp.AuthorWithInheritance[T] `tstype:"bookapp.AuthorWithInheritance<T>" json:"author"`
+	Base                `tstype:",inline"`
+	Base2[T]            ` json:",inline"`
+	Base3[X, T]         `  yaml:",inline"`
+	OtherWithBase       Base                             `                                          json:"otherWithBase"`
+	OtherWithBase2      Base2[X]                         `                                          json:"otherWithBase2"`
+	OtherValue          string                           `                                          json:"otherValue"`
+	Author              bookapp.AuthorWithInheritance[T] `tstype:"bookapp.AuthorWithInheritance<T>" json:"author"`
+	bookapp.Book        `tstype:",inline"`
+	bookapp.TextBook[T] `tstype:",inline"`
 }
