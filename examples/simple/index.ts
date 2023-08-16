@@ -8,8 +8,7 @@
  */
 export type ComplexType = { [key: string]: { [key: number /* uint16 */]: number /* uint32 */ | undefined}};
 export type UserRole = string;
-export const UserRoleDefault: UserRole = "viewer";
-export const UserRoleEditor: UserRole = "editor"; // Line comments are also kept
+export const UserRoleDefault: UserRole = "viewer";export const UserRoleEditor: UserRole = "editor"; // Line comments are also kept
 export interface UserEntry {
   /**
    * Instead of specifying `tstype` we could also declare the typing
