@@ -156,15 +156,25 @@ func (g *PackageGenerator) writeInterfaceFields(
 	fields []*ast.Field,
 	depth int,
 ) {
+	// Usually interfaces in Golang don't have fields, but generic (union) interfaces we can map to Typescript.
+
 	if len(fields) == 0 { // Type without any fields (probably only has methods)
 		s.WriteString(g.conf.FallbackType)
 		return
 	}
-	s.WriteByte('\n')
+
+	didContainNonFuncFields := false
 	for _, f := range fields {
 		if _, isFunc := f.Type.(*ast.FuncType); isFunc {
 			continue
 		}
+		if !didContainNonFuncFields {
+			s.WriteByte(
+				'\n',
+			) // We need to write a newline so comments of generic components render nicely.
+			didContainNonFuncFields = true
+		}
+
 		if g.PreserveTypeComments() {
 			g.writeCommentGroupIfNotNil(s, f.Doc, depth+1)
 		}
@@ -175,6 +185,10 @@ func (g *PackageGenerator) writeInterfaceFields(
 			s.WriteString(" // ")
 			s.WriteString(f.Comment.Text())
 		}
+	}
+
+	if !didContainNonFuncFields {
+		s.WriteString(g.conf.FallbackType)
 	}
 }
 

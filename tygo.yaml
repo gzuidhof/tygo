@@ -40,3 +40,6 @@ packages:
   - path: "github.com/gzuidhof/tygo/examples/yaml"
     output_path: "./examples/yaml/index.ts"
     flavor: "yaml"
+  - path: "github.com/gzuidhof/tygo/examples/interface"
+
+
