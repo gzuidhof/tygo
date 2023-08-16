@@ -107,7 +107,7 @@ func (g *PackageGenerator) writeTypeSpec(s *strings.Builder, ts *ast.TypeSpec, g
 	}
 
 	if ts.Comment != nil && g.PreserveTypeComments() {
-		s.WriteString(" // " + ts.Comment.Text())
+		g.writeSingleLineComment(s, ts.Comment)
 	} else {
 		s.WriteString("\n")
 	}
@@ -178,8 +178,9 @@ func (g *PackageGenerator) writeValueSpec(s *strings.Builder, vs *ast.ValueSpec,
 		}
 
 		s.WriteByte(';')
-		if vs.Comment != nil && g.PreserveDocComments() {
-			s.WriteString(" // " + vs.Comment.Text())
+
+		if g.PreserveDocComments() && vs.Comment != nil {
+			g.writeSingleLineComment(s, vs.Comment)
 		} else {
 			s.WriteByte('\n')
 		}

@@ -19,8 +19,13 @@ func (g *PackageGenerator) writeCommentGroupIfNotNil(s *strings.Builder, f *ast.
 	}
 }
 
-func (g *PackageGenerator) writeCommentGroup(s *strings.Builder, f *ast.CommentGroup, depth int) {
-	docLines := strings.Split(f.Text(), "\n")
+func (g *PackageGenerator) writeCommentGroup(s *strings.Builder, cg *ast.CommentGroup, depth int) {
+	docLines := strings.Split(cg.Text(), "\n")
+
+	if len(cg.List) > 0 && cg.Text() == "" { // This is a directive comment like //go:embed
+		s.WriteByte('\n')
+		return
+	}
 
 	if depth != 0 {
 		g.writeIndent(s, depth)
@@ -39,4 +44,21 @@ func (g *PackageGenerator) writeCommentGroup(s *strings.Builder, f *ast.CommentG
 	}
 	g.writeIndent(s, depth)
 	s.WriteString(" */\n")
+}
+
+// Outputs a comment like // hello world
+func (g *PackageGenerator) writeSingleLineComment(s *strings.Builder, cg *ast.CommentGroup) {
+	text := cg.Text()
+
+	if len(cg.List) > 0 && cg.Text() == "" { // This is a directive comment like //go:embed
+		s.WriteByte('\n')
+		return
+	}
+
+	s.WriteString(" // " + text)
+
+	if len(text) == 0 {
+		// This is an empty comment like //
+		s.WriteByte('\n')
+	}
 }
