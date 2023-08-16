@@ -134,7 +134,8 @@ func (g *PackageGenerator) writeTypeInheritanceSpec(s *strings.Builder, fields [
 				panic(err)
 			}
 
-			if !isInherited(tags) {
+			tstypeTag, err := tags.Get("tstype")
+			if err != nil || !tstypeTag.HasOption("extends") {
 				continue
 			}
 
@@ -264,12 +265,4 @@ func getInheritedType(f ast.Expr) (name string, valid bool) {
 
 	}
 	return
-}
-
-func isInherited(tags *structtag.Tags) bool {
-	tstypeTag, err := tags.Get("tstype")
-	if err == nil && tstypeTag.HasOption("extends") {
-		return true
-	}
-	return false
 }
