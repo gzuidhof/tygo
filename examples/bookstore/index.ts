@@ -7,6 +7,9 @@ export interface AuthorBookListing {
   author_name: string;
   written_books: Book[];
 }
+export interface AuthorWithInheritance<T extends number /* int */> {
+  id: T;
+}
 
 //////////
 // source: book.go
@@ -32,4 +35,7 @@ export interface Book {
   genre: 'novel' | 'crime' | 'fantasy';
   chapters: Chapter[];
   published_at?: string /* RFC 3339 formatted */;
+}
+export interface TextBook<T extends number /* int */> {
+  pages: T;
 }

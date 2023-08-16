@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"go/ast"
 	"strings"
+
+	"github.com/fatih/structtag"
 )
 
 type groupContext struct {
@@ -67,8 +69,13 @@ func (g *PackageGenerator) writeSpec(s *strings.Builder, spec ast.Spec, group *g
 // `type X struct { ... }`
 // or
 // `type Bar = string`
-func (g *PackageGenerator) writeTypeSpec(s *strings.Builder, ts *ast.TypeSpec, group *groupContext) {
-	if ts.Doc != nil && g.PreserveTypeComments() { // The spec has its own comment, which overrules the grouped comment.
+func (g *PackageGenerator) writeTypeSpec(
+	s *strings.Builder,
+	ts *ast.TypeSpec,
+	group *groupContext,
+) {
+	if ts.Doc != nil &&
+		g.PreserveTypeComments() { // The spec has its own comment, which overrules the grouped comment.
 		g.writeCommentGroup(s, ts.Doc, 0)
 	} else if group.isGroupedDeclaration && g.PreserveTypeComments() {
 		g.writeCommentGroupIfNotNil(s, group.doc, 0)
@@ -83,6 +90,7 @@ func (g *PackageGenerator) writeTypeSpec(s *strings.Builder, ts *ast.TypeSpec, g
 			g.writeTypeParamsFields(s, ts.TypeParams.List)
 		}
 
+		g.writeTypeInheritanceSpec(s, st.Fields.List)
 		s.WriteString(" {\n")
 		g.writeStructFields(s, st.Fields.List, 0)
 		s.WriteString("}")
@@ -113,9 +121,43 @@ func (g *PackageGenerator) writeTypeSpec(s *strings.Builder, ts *ast.TypeSpec, g
 	}
 }
 
+// Writing of type inheritance specs, which are expressions like
+// `type X struct {  }`
+// `type Y struct { X `tstype:",extends"` }`
+// `export interface Y extends X { }`
+func (g *PackageGenerator) writeTypeInheritanceSpec(s *strings.Builder, fields []*ast.Field) {
+	inheritances := make([]string, 0)
+	for _, f := range fields {
+		if f.Type != nil && f.Tag != nil {
+			tags, err := structtag.Parse(f.Tag.Value[1 : len(f.Tag.Value)-1])
+			if err != nil {
+				panic(err)
+			}
+
+			tstypeTag, err := tags.Get("tstype")
+			if err != nil || !tstypeTag.HasOption("extends") {
+				continue
+			}
+
+			name, valid := getInheritedType(f.Type)
+			if valid {
+				inheritances = append(inheritances, name)
+			}
+		}
+	}
+	if len(inheritances) > 0 {
+		s.WriteString(" extends ")
+		s.WriteString(strings.Join(inheritances, ", "))
+	}
+}
+
 // Writing of value specs, which are exported const expressions like
 // const SomeValue = 3
-func (g *PackageGenerator) writeValueSpec(s *strings.Builder, vs *ast.ValueSpec, group *groupContext) {
+func (g *PackageGenerator) writeValueSpec(
+	s *strings.Builder,
+	vs *ast.ValueSpec,
+	group *groupContext,
+) {
 	for i, name := range vs.Names {
 		group.iotaValue = group.iotaValue + 1
 		if name.Name == "_" {
@@ -125,7 +167,8 @@ func (g *PackageGenerator) writeValueSpec(s *strings.Builder, vs *ast.ValueSpec,
 			continue
 		}
 
-		if vs.Doc != nil && g.PreserveTypeComments() { // The spec has its own comment, which overrules the grouped comment.
+		if vs.Doc != nil &&
+			g.PreserveTypeComments() { // The spec has its own comment, which overrules the grouped comment.
 			g.writeCommentGroup(s, vs.Doc, 0)
 		} else if group.isGroupedDeclaration && g.PreserveTypeComments() {
 			g.writeCommentGroupIfNotNil(s, group.doc, 0)
@@ -186,4 +229,41 @@ func (g *PackageGenerator) writeValueSpec(s *strings.Builder, vs *ast.ValueSpec,
 		}
 
 	}
+}
+
+func getInheritedType(f ast.Expr) (name string, valid bool) {
+	switch ft := f.(type) {
+	case *ast.Ident:
+		if ft.Obj != nil && ft.Obj.Decl != nil {
+			dcl, ok := ft.Obj.Decl.(*ast.TypeSpec)
+			if ok {
+				_, isStruct := dcl.Type.(*ast.StructType)
+				valid = isStruct && dcl.Name.IsExported()
+				name = dcl.Name.Name
+				break
+			}
+		}
+	case *ast.IndexExpr:
+		name, valid = getInheritedType(ft.X)
+		if valid {
+			generic := getIdent(ft.Index.(*ast.Ident).Name)
+			name += fmt.Sprintf("<%s>", generic)
+			break
+		}
+	case *ast.IndexListExpr:
+		name, valid = getInheritedType(ft.X)
+		if valid {
+			generic := ""
+			for _, index := range ft.Indices {
+				generic += fmt.Sprintf("%s, ", getIdent(index.(*ast.Ident).Name))
+			}
+			name += fmt.Sprintf("<%s>", generic[:len(generic)-2])
+			break
+		}
+	case *ast.SelectorExpr:
+		valid = ft.Sel.IsExported()
+		name = fmt.Sprintf("%s.%s", ft.X, ft.Sel)
+
+	}
+	return
 }

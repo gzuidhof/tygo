@@ -4,7 +4,7 @@ Tygo is a tool for generating Typescript typings from Golang source files that j
 
 It preserves comments, understands constants and also supports non-struct `type` expressions. It's perfect for generating equivalent types for a Golang REST API to be used in your front-end codebase.
 
-**🚀 Now supports Golang 1.18 generic types**
+**🚀 Now supports Golang 1.18 generic types, struct inheritance**
 
 ## Installation
 
@@ -223,7 +223,7 @@ export interface Nicknames {
 
 ### Readonly fields
 
-Sometimes a field should be immutable, you can `,readonly` to the `tstype` tag to mark a field as `readonly`.
+Sometimes a field should be immutable, you can add `,readonly` to the `tstype` tag to mark a field as `readonly`.
 
 ```golang
 // Golang input
@@ -238,6 +238,42 @@ type Cat struct {
 export interface Cat {
   readonly name: string;
   owner: string;
+}
+```
+
+## Inheritance
+
+Tygo supports interface inheritance. To extend an `inlined` struct, use the tag `tstype:,extends` on struct fields you wish to extend. Only `struct` types can be extended.
+
+Example usage [here](examples/inheritance)
+
+```go
+// Golang input
+import "example.com/external"
+
+type Base struct {
+	Name string `json:"name"`
+}
+
+type Base2[T string | int] struct {
+	ID T `json:"id"`
+}
+
+type Other[T int] struct {
+	Base                   `       tstype:",extends"`
+	Base2[T]               `       tstype:",extends"`
+	external.AnotherStruct `       tstype:",extends"`
+	OtherValue             string `                  json:"other_value"`
+}
+```
+
+```typescript
+// Typescript output
+export interface Other<T extends number /* int */>
+  extends Base,
+    Base2<T>,
+    external.AnotherStruct {
+  other_value: string;
 }
 ```
 
@@ -294,7 +330,7 @@ packages:
 // Golang input
 type Foo struct {
 	TaggedField string `yaml:"custom_field_name_in_yaml"`
-        UntaggedField string
+  UntaggedField string
 }
 ```
 

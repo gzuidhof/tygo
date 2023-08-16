@@ -2,11 +2,10 @@ package tygo
 
 import (
 	"fmt"
-	"regexp"
-	"strings"
-
 	"go/ast"
 	"go/token"
+	"regexp"
+	"strings"
 
 	"github.com/fatih/structtag"
 )
@@ -36,7 +35,12 @@ func (g *PackageGenerator) writeIndent(s *strings.Builder, depth int) {
 	}
 }
 
-func (g *PackageGenerator) writeType(s *strings.Builder, t ast.Expr, depth int, optionalParens bool) {
+func (g *PackageGenerator) writeType(
+	s *strings.Builder,
+	t ast.Expr,
+	depth int,
+	optionalParens bool,
+) {
 	switch t := t.(type) {
 	case *ast.StarExpr:
 		if optionalParens {
@@ -147,7 +151,11 @@ func (g *PackageGenerator) writeTypeParamsFields(s *strings.Builder, fields []*a
 	s.WriteByte('>')
 }
 
-func (g *PackageGenerator) writeInterfaceFields(s *strings.Builder, fields []*ast.Field, depth int) {
+func (g *PackageGenerator) writeInterfaceFields(
+	s *strings.Builder,
+	fields []*ast.Field,
+	depth int,
+) {
 	// Usually interfaces in Golang don't have fields, but generic (union) interfaces we can map to Typescript.
 
 	if len(fields) == 0 { // Type without any fields (probably only has methods)
@@ -161,7 +169,9 @@ func (g *PackageGenerator) writeInterfaceFields(s *strings.Builder, fields []*as
 			continue
 		}
 		if !didContainNonFuncFields {
-			s.WriteByte('\n') // We need to write a newline so comments of generic components render nicely.
+			s.WriteByte(
+				'\n',
+			) // We need to write a newline so comments of generic components render nicely.
 			didContainNonFuncFields = true
 		}
 
@@ -227,7 +237,7 @@ func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.F
 			tstypeTag, err := tags.Get("tstype")
 			if err == nil {
 				tstype = tstypeTag.Name
-				if tstype == "-" {
+				if tstype == "-" || tstypeTag.HasOption("extends") {
 					continue
 				}
 				required = tstypeTag.HasOption("required")
