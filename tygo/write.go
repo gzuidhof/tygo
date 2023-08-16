@@ -204,7 +204,7 @@ func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.F
 			jsonTag, err := tags.Get("json")
 			if err == nil {
 				name = jsonTag.Name
-				if name == "-" || jsonTag.HasOption("inline") {
+				if name == "-" {
 					continue
 				}
 
@@ -213,7 +213,7 @@ func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.F
 			yamlTag, err := tags.Get("yaml")
 			if err == nil {
 				name = yamlTag.Name
-				if name == "-" || yamlTag.HasOption("inline") {
+				if name == "-" {
 					continue
 				}
 
@@ -223,7 +223,7 @@ func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.F
 			tstypeTag, err := tags.Get("tstype")
 			if err == nil {
 				tstype = tstypeTag.Name
-				if tstype == "-" || tstypeTag.HasOption("inline") {
+				if tstype == "-" || tstypeTag.HasOption("extends") {
 					continue
 				}
 				required = tstypeTag.HasOption("required")

@@ -91,7 +91,6 @@ func (g *PackageGenerator) writeTypeSpec(
 		}
 
 		g.writeTypeInheritanceSpec(s, st.Fields.List)
-
 		s.WriteString(" {\n")
 		g.writeStructFields(s, st.Fields.List, 0)
 		s.WriteString("}")
@@ -124,7 +123,7 @@ func (g *PackageGenerator) writeTypeSpec(
 
 // Writing of type inheritance specs, which are expressions like
 // `type X struct {  }`
-// `type Y struct { X `tstype:",inline"` }`
+// `type Y struct { X `tstype:",extends"` }`
 // `export interface Y extends X { }`
 func (g *PackageGenerator) writeTypeInheritanceSpec(s *strings.Builder, fields []*ast.Field) {
 	inheritances := make([]string, 0)
@@ -269,15 +268,7 @@ func getInheritedType(f ast.Expr) (name string, valid bool) {
 
 func isInherited(tags *structtag.Tags) bool {
 	tstypeTag, err := tags.Get("tstype")
-	if err == nil && tstypeTag.HasOption("inline") {
-		return true
-	}
-	jsonTag, err := tags.Get("json")
-	if err == nil && jsonTag.HasOption("inline") {
-		return true
-	}
-	yamlTag, err := tags.Get("yaml")
-	if err == nil && yamlTag.HasOption("inline") {
+	if err == nil && tstypeTag.HasOption("extends") {
 		return true
 	}
 	return false
