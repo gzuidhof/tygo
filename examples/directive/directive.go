@@ -25,3 +25,7 @@ const (
 	// RepoIndexerTypeStats repository stats indexer
 	RepoIndexerTypeStats // 1
 )
+
+const A = "a"
+const B = "a"
+const C = "c"

@@ -23,6 +23,7 @@ func (g *PackageGenerator) writeCommentGroup(s *strings.Builder, cg *ast.Comment
 	docLines := strings.Split(cg.Text(), "\n")
 
 	if len(cg.List) > 0 && cg.Text() == "" { // This is a directive comment like //go:embed
+		s.WriteByte('\n')
 		return
 	}
 
@@ -46,10 +47,7 @@ func (g *PackageGenerator) writeCommentGroup(s *strings.Builder, cg *ast.Comment
 }
 
 // Outputs a comment like // hello world
-func (g *PackageGenerator) writeSingleLineCommentIfNotNil(s *strings.Builder, cg *ast.CommentGroup) {
-	if cg == nil {
-		return
-	}
+func (g *PackageGenerator) writeSingleLineComment(s *strings.Builder, cg *ast.CommentGroup) {
 	text := cg.Text()
 
 	if len(cg.List) > 0 && cg.Text() == "" { // This is a directive comment like //go:embed

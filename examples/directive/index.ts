@@ -17,7 +17,9 @@ export const SomeValue = 3;
  * Empty Comment
  */
 export const AnotherValue = 4;
-export const DirectiveOnly = 5;/**
+
+export const DirectiveOnly = 5;
+/**
  * RepoIndexerType specifies the repository indexer type
  */
 export type RepoIndexerType = number /* int */;
@@ -29,3 +31,6 @@ export const RepoIndexerTypeCode: RepoIndexerType = 0; // 0
  * RepoIndexerTypeStats repository stats indexer
  */
 export const RepoIndexerTypeStats: RepoIndexerType = 1; // 1
+export const A = "a";
+export const B = "a";
+export const C = "c";
