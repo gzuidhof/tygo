@@ -139,7 +139,7 @@ func (g *PackageGenerator) writeTypeInheritanceSpec(s *strings.Builder, fields [
 				continue
 			}
 
-			name, valid := getInheritedType(f.Type)
+			name, valid := getInheritedType(f.Type, tstypeTag)
 			if valid {
 				inheritances = append(inheritances, name)
 			}
@@ -231,7 +231,7 @@ func (g *PackageGenerator) writeValueSpec(
 	}
 }
 
-func getInheritedType(f ast.Expr) (name string, valid bool) {
+func getInheritedType(f ast.Expr, tag *structtag.Tag) (name string, valid bool) {
 	switch ft := f.(type) {
 	case *ast.Ident:
 		if ft.Obj != nil && ft.Obj.Decl != nil {
@@ -240,29 +240,34 @@ func getInheritedType(f ast.Expr) (name string, valid bool) {
 				_, isStruct := dcl.Type.(*ast.StructType)
 				valid = isStruct && dcl.Name.IsExported()
 				name = dcl.Name.Name
-				break
 			}
 		}
 	case *ast.IndexExpr:
-		name, valid = getInheritedType(ft.X)
+		name, valid = getInheritedType(ft.X, tag)
 		if valid {
 			generic := getIdent(ft.Index.(*ast.Ident).Name)
 			name += fmt.Sprintf("<%s>", generic)
-			break
 		}
 	case *ast.IndexListExpr:
-		name, valid = getInheritedType(ft.X)
+		name, valid = getInheritedType(ft.X, tag)
 		if valid {
 			generic := ""
 			for _, index := range ft.Indices {
 				generic += fmt.Sprintf("%s, ", getIdent(index.(*ast.Ident).Name))
 			}
 			name += fmt.Sprintf("<%s>", generic[:len(generic)-2])
-			break
 		}
 	case *ast.SelectorExpr:
 		valid = ft.Sel.IsExported()
 		name = fmt.Sprintf("%s.%s", ft.X, ft.Sel)
+	case *ast.StarExpr:
+		name, valid = getInheritedType(ft.X, tag)
+		if valid {
+			// If the type is not required, mark as optional inheritance
+			if !tag.HasOption("required") {
+				name = fmt.Sprintf("Partial<%s>", name)
+			}
+		}
 
 	}
 	return

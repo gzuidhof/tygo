@@ -243,7 +243,11 @@ export interface Cat {
 
 ## Inheritance
 
-Tygo supports interface inheritance. To extend an `inlined` struct, use the tag `tstype:,extends` on struct fields you wish to extend. Only `struct` types can be extended.
+Tygo supports interface inheritance. To extend an `inlined` struct, use the tag `tstype:",extends"` on struct fields you wish to extend. Only `struct` types can be extended.
+
+Struct pointers are optionally extended using `Partial<MyType>`. To mark these structs as required, use the tag `tstype:",extends,required"`.
+
+Named `struct fields` can also be extended.
 
 Example usage [here](examples/inheritance)
 
@@ -259,9 +263,14 @@ type Base2[T string | int] struct {
 	ID T `json:"id"`
 }
 
+type OptionalPtr struct {
+	Field string `json:"field"`
+}
+
 type Other[T int] struct {
-	Base                   `       tstype:",extends"`
+	*Base                  `       tstype:",extends,required"`
 	Base2[T]               `       tstype:",extends"`
+	*OptionalPtr           `       tstype:",extends"`
 	external.AnotherStruct `       tstype:",extends"`
 	OtherValue             string `                  json:"other_value"`
 }
@@ -269,9 +278,22 @@ type Other[T int] struct {
 
 ```typescript
 // Typescript output
+export interface Base {
+  name: string;
+}
+
+export interface Base2<T extends string | number /* int */> {
+  id: T;
+}
+
+export interface OptionalPtr {
+  field: string;
+}
+
 export interface Other<T extends number /* int */>
   extends Base,
     Base2<T>,
+    Partial<OptionalPtr>,
     external.AnotherStruct {
   other_value: string;
 }
@@ -330,7 +352,7 @@ packages:
 // Golang input
 type Foo struct {
 	TaggedField string `yaml:"custom_field_name_in_yaml"`
-  UntaggedField string
+    UntaggedField string
 }
 ```
 
