@@ -272,3 +272,27 @@ func getInheritedType(f ast.Expr, tag *structtag.Tag) (name string, valid bool) 
 	}
 	return
 }
+
+func getFieldName(f ast.Expr) (name string, valid bool) {
+	switch ft := f.(type) {
+	case *ast.Ident:
+		name = ft.Name
+		if ft.Obj != nil && ft.Obj.Decl != nil {
+			dcl, ok := ft.Obj.Decl.(*ast.TypeSpec)
+			if ok {
+				valid = dcl.Name.IsExported()
+			}
+		}
+	case *ast.IndexExpr:
+		return getFieldName(ft.X)
+	case *ast.IndexListExpr:
+		return getFieldName(ft.X)
+	case *ast.SelectorExpr:
+		valid = ft.Sel.IsExported()
+		name = ft.Sel.String()
+	case *ast.StarExpr:
+		return getFieldName(ft.X)
+	}
+
+	return
+}

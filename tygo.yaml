@@ -21,6 +21,14 @@ packages:
     frontmatter:
       | # We can define some additional text to put at the start of the file.
       import * as bookapp from "../bookstore"
+  - path: "github.com/gzuidhof/tygo/examples/embed"
+    fallback_type: unknown
+    type_mappings:
+      bookapp.Book: "bookapp.Book"
+      bookapp.Chapter: "bookapp.Chapter"
+    frontmatter:
+      | # We can define some additional text to put at the start of the file.
+      import * as bookapp from "../bookstore"
   - path: "github.com/gzuidhof/tygo/examples/generic"
     fallback_type: unknown
   - path: "github.com/gzuidhof/tygo/examples/preserveTypeComments"
