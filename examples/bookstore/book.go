@@ -29,6 +29,6 @@ type Book struct {
 }
 
 type TextBook[T int] struct {
-	Book  `  tstype:",inline"`
+	Book  `tstype:",extends"`
 	Pages T `                 json:"pages"`
 }
