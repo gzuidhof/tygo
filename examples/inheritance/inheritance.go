@@ -18,13 +18,13 @@ type Base3[T string, X int] struct {
 }
 
 type Other[T int, X string] struct {
-	*Base                `tstype:",extends,required"`
-	Base2[T]             `tstype:",extends"`
-	*Base3[X, T]         `tstype:",extends"`
-	OtherWithBase        Base                             `                                          json:"otherWithBase"`
-	OtherWithBase2       Base2[X]                         `                                          json:"otherWithBase2"`
-	OtherValue           string                           `                                          json:"otherValue"`
-	Author               bookapp.AuthorWithInheritance[T] `tstype:"bookapp.AuthorWithInheritance<T>" json:"author"`
-	bookapp.Book         `tstype:",extends"`
-	*bookapp.TextBook[T] `tstype:",extends,required"`
+	*Base          `tstype:",extends,required"`
+	Base2[T]       `tstype:",extends"`
+	*Base3[X, T]   `tstype:",extends"`
+	OtherWithBase  Base                             `                                          json:"otherWithBase"`
+	OtherWithBase2 Base2[X]                         `                                          json:"otherWithBase2"`
+	OtherValue     string                           `                                          json:"otherValue"`
+	Author         bookapp.AuthorWithInheritance[T] `tstype:"bookapp.AuthorWithInheritance<T>" json:"author"`
+	bookapp.Book   `tstype:",extends"`
+	TextBook       *bookapp.TextBook[T] `tstype:",extends,required"`
 }

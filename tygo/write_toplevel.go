@@ -240,7 +240,6 @@ func getInheritedType(f ast.Expr, tag *structtag.Tag) (name string, valid bool) 
 				_, isStruct := dcl.Type.(*ast.StructType)
 				valid = isStruct && dcl.Name.IsExported()
 				name = dcl.Name.Name
-				break
 			}
 		}
 	case *ast.IndexExpr:
@@ -248,7 +247,6 @@ func getInheritedType(f ast.Expr, tag *structtag.Tag) (name string, valid bool) 
 		if valid {
 			generic := getIdent(ft.Index.(*ast.Ident).Name)
 			name += fmt.Sprintf("<%s>", generic)
-			break
 		}
 	case *ast.IndexListExpr:
 		name, valid = getInheritedType(ft.X, tag)
@@ -258,7 +256,6 @@ func getInheritedType(f ast.Expr, tag *structtag.Tag) (name string, valid bool) 
 				generic += fmt.Sprintf("%s, ", getIdent(index.(*ast.Ident).Name))
 			}
 			name += fmt.Sprintf("<%s>", generic[:len(generic)-2])
-			break
 		}
 	case *ast.SelectorExpr:
 		valid = ft.Sel.IsExported()
@@ -270,7 +267,6 @@ func getInheritedType(f ast.Expr, tag *structtag.Tag) (name string, valid bool) 
 			if !tag.HasOption("required") {
 				name = fmt.Sprintf("Partial<%s>", name)
 			}
-			return name, valid
 		}
 
 	}

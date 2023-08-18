@@ -247,6 +247,8 @@ Tygo supports interface inheritance. To extend an `inlined` struct, use the tag 
 
 Struct pointers are optionally extended using `Partial<MyType>`. To mark these structs as required, use the tag `tstype:",extends,required"`.
 
+Named `struct fields` can also be extended.
+
 Example usage [here](examples/inheritance)
 
 ```go
