@@ -8,15 +8,6 @@ import * as bookapp from "../bookstore"
  * TokenType Built-in type alias
  */
 export type TokenType = string;
-/**
- * Reference struct type
- */
-export interface Reference {
-  foo: string;
-}
-export interface Base {
-  id: string;
-}
 export interface StructEmbed extends Base {
   tokenType: TokenType; // built-in type field without `tstype:"extends"`
   reference: Reference; // embed struct without `tstype:"extends"`
@@ -24,4 +15,20 @@ export interface StructEmbed extends Base {
   bar: string;
   book: bookapp.Book; // embed external struct without `tstype:"extends"`
   chapter?: bookapp.Chapter; // embed external struct pointer without `tstype:"extends"`
+}
+
+//////////
+// source: types.go
+/*
+Package embed types defined in the Go file after the parsed file in the same package
+*/
+
+export interface Base {
+  id: string;
+}
+/**
+ * Reference struct type, defined after embed.go, the same pkg but not the same file
+ */
+export interface Reference {
+  foo: string;
 }
