@@ -3,6 +3,7 @@ package tygo
 import (
 	"fmt"
 	"go/ast"
+	"go/token"
 	"strings"
 
 	"github.com/fatih/structtag"
@@ -241,6 +242,10 @@ func getInheritedType(f ast.Expr, tag *structtag.Tag) (name string, valid bool) 
 				valid = isStruct && dcl.Name.IsExported()
 				name = dcl.Name.Name
 			}
+		} else {
+			// Types defined in the Go file after the parsed file in the same package
+			valid = token.IsExported(ft.Name)
+			name = ft.Name
 		}
 	case *ast.IndexExpr:
 		name, valid = getInheritedType(ft.X, tag)
@@ -270,5 +275,32 @@ func getInheritedType(f ast.Expr, tag *structtag.Tag) (name string, valid bool) 
 		}
 
 	}
+	return
+}
+
+func getAnonymousFieldName(f ast.Expr) (name string, valid bool) {
+	switch ft := f.(type) {
+	case *ast.Ident:
+		name = ft.Name
+		if ft.Obj != nil && ft.Obj.Decl != nil {
+			dcl, ok := ft.Obj.Decl.(*ast.TypeSpec)
+			if ok {
+				valid = dcl.Name.IsExported()
+			}
+		} else {
+			// Types defined in the Go file after the parsed file in the same package
+			valid = token.IsExported(name)
+		}
+	case *ast.IndexExpr:
+		return getAnonymousFieldName(ft.X)
+	case *ast.IndexListExpr:
+		return getAnonymousFieldName(ft.X)
+	case *ast.SelectorExpr:
+		valid = ft.Sel.IsExported()
+		name = ft.Sel.String()
+	case *ast.StarExpr:
+		return getAnonymousFieldName(ft.X)
+	}
+
 	return
 }

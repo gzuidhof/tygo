@@ -200,6 +200,11 @@ func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.F
 		readonly := false
 
 		var fieldName string
+		if len(f.Names) == 0 { // anonymous field
+			if name, valid := getAnonymousFieldName(f.Type); valid {
+				fieldName = name
+			}
+		}
 		if len(f.Names) != 0 && f.Names[0] != nil && len(f.Names[0].Name) != 0 {
 			fieldName = f.Names[0].Name
 		}
