@@ -19,7 +19,7 @@ func ReadFromFilepath(cfgFilepath string) tygo.Config {
 	conf := tygo.Config{}
 	err = yaml.Unmarshal(b, &conf)
 	if err != nil {
-		log.Fatalf("Could not parse config file froms: %v", err)
+		log.Fatalf("Could not parse config file from: %v", err)
 	}
 
 	// apply defaults
