@@ -19,7 +19,7 @@ func Execute() {
 
 	rootCmd.PersistentFlags().
 		String("config", "tygo.yaml", "config file to load (default is tygo.yaml in the current folder)")
-	rootCmd.Version = Version() + " " + Target() + " (" + CommitDate() + ") " + Commit()
+	rootCmd.Version = FullVersion()
 	rootCmd.PersistentFlags().BoolP("debug", "D", false, "Debug mode (prints debug messages)")
 
 	rootCmd.AddCommand(&cobra.Command{

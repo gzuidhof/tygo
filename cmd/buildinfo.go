@@ -1,11 +1,15 @@
 package cmd
 
+import (
+	"fmt"
+	"runtime"
+)
+
 // Field injected by goreleaser
 var (
 	version    = "<unknown>"
 	commitDate = "date unknown"
 	commit     = ""
-	target     = ""
 )
 
 func Version() string {
@@ -21,5 +25,10 @@ func Commit() string {
 }
 
 func Target() string {
-	return target
+	return runtime.GOOS
+}
+
+func FullVersion() string {
+	return fmt.Sprintf("%s %s/%s %s (%s) %s",
+		version, runtime.GOOS, runtime.GOARCH, runtime.Version(), commitDate, commit)
 }
