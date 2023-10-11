@@ -179,7 +179,9 @@ func (g *PackageGenerator) writeInterfaceFields(
 		if _, isFunc := f.Type.(*ast.FuncType); isFunc {
 			continue
 		}
-		if !didContainNonFuncFields {
+		if didContainNonFuncFields {
+			s.WriteString(" |\n")
+		} else {
 			s.WriteByte(
 				'\n',
 			) // We need to write a newline so comments of generic components render nicely.
