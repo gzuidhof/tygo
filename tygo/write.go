@@ -180,7 +180,7 @@ func (g *PackageGenerator) writeInterfaceFields(
 			continue
 		}
 		if didContainNonFuncFields {
-			s.WriteString(" |\n")
+			s.WriteString(" &\n")
 		} else {
 			s.WriteByte(
 				'\n',
