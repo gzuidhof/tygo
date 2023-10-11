@@ -15,7 +15,6 @@ type groupContext struct {
 	groupValue           string
 	groupType            string
 	iotaValue            int
-	iotaOffset           int
 }
 
 func (g *PackageGenerator) writeGroupDecl(s *strings.Builder, decl *ast.GenDecl) {
@@ -202,24 +201,14 @@ func (g *PackageGenerator) writeValueSpec(
 			val := vs.Values[i]
 			tempSB := &strings.Builder{}
 			g.writeType(tempSB, val, 0, true)
-			valueString := tempSB.String()
-
-			if isProbablyIotaType(valueString) {
-				group.iotaOffset = basicIotaOffsetValueParse(valueString)
-				group.groupValue = "iota"
-				valueString = fmt.Sprint(group.iotaValue + group.iotaOffset)
-			} else {
-				group.groupValue = valueString
-			}
-			s.WriteString(valueString)
-
-		} else { // We must use the previous value or +1 in case of iota
-			valueString := group.groupValue
-			if group.groupValue == "iota" {
-				valueString = fmt.Sprint(group.iotaValue + group.iotaOffset)
-			}
-			s.WriteString(valueString)
+			group.groupValue = tempSB.String()
 		}
+
+		valueString := group.groupValue
+		if isProbablyIotaType(valueString) {
+			valueString = replaceIotaValue(valueString, group.iotaValue)
+		}
+		s.WriteString(valueString)
 
 		s.WriteByte(';')
 
