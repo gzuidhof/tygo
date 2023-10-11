@@ -11,6 +11,7 @@ import (
 )
 
 var validJSNameRegexp = regexp.MustCompile(`(?m)^[\pL_][\pL\pN_]*$`)
+var backquoteEscapeRegexp = regexp.MustCompile(`([$\\])`)
 
 func validJSName(n string) bool {
 	return validJSNameRegexp.MatchString(n)
@@ -88,6 +89,9 @@ func (g *PackageGenerator) writeType(
 		g.writeType(s, t.Value, depth, false)
 		s.WriteByte('}')
 	case *ast.BasicLit:
+		if strings.HasPrefix(t.Value, "`") {
+			t.Value = backquoteEscapeRegexp.ReplaceAllString(t.Value, `\$1`)
+		}
 		s.WriteString(t.Value)
 	case *ast.ParenExpr:
 		s.WriteByte('(')
@@ -104,11 +108,18 @@ func (g *PackageGenerator) writeType(
 	case *ast.CallExpr, *ast.FuncType, *ast.ChanType:
 		s.WriteString(g.conf.FallbackType)
 	case *ast.UnaryExpr:
-		if t.Op == token.TILDE {
+		switch t.Op {
+		case token.TILDE:
 			// We just ignore the tilde token, in Typescript extended types are
 			// put into the generic typing itself, which we can't support yet.
 			g.writeType(s, t.X, depth, false)
-		} else {
+		case token.XOR:
+			s.WriteString("~")
+			g.writeType(s, t.X, depth, false)
+		case token.ADD, token.SUB, token.NOT:
+			s.WriteString(t.Op.String())
+			g.writeType(s, t.X, depth, false)
+		default:
 			err := fmt.Errorf("unhandled unary expr: %v\n %T", t, t)
 			fmt.Println(err)
 			panic(err)
