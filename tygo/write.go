@@ -153,7 +153,7 @@ func (g *PackageGenerator) writeType(
 		inParen := false
 		switch p := p.(type) {
 		case *ast.BinaryExpr:
-			if /* goOperatorPrecedence[t.Op] != goOperatorPrecedence[p.Op] && */ jsNumberOperatorPrecedence[t.Op] < jsNumberOperatorPrecedence[p.Op] {
+			if jsNumberOperatorPrecedence[t.Op] < jsNumberOperatorPrecedence[p.Op] {
 				inParen = true
 			}
 		}
