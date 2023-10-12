@@ -12,6 +12,7 @@ import (
 
 var validJSNameRegexp = regexp.MustCompile(`(?m)^[\pL_][\pL\pN_]*$`)
 var backquoteEscapeRegexp = regexp.MustCompile(`([$\\])`)
+var octalPrefixRegexp = regexp.MustCompile(`^0[0-7]`)
 
 func validJSName(n string) bool {
 	return validJSNameRegexp.MatchString(n)
@@ -89,8 +90,15 @@ func (g *PackageGenerator) writeType(
 		g.writeType(s, t.Value, depth, false)
 		s.WriteByte('}')
 	case *ast.BasicLit:
+		switch t.Kind {
+		case token.STRING:
 		if strings.HasPrefix(t.Value, "`") {
 			t.Value = backquoteEscapeRegexp.ReplaceAllString(t.Value, `\$1`)
+			}
+		case token.INT:
+			if octalPrefixRegexp.MatchString(t.Value) {
+				t.Value = "0o" + t.Value[1:]
+			}
 		}
 		s.WriteString(t.Value)
 	case *ast.ParenExpr:
