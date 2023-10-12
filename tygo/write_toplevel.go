@@ -109,7 +109,7 @@ func (g *PackageGenerator) writeTypeSpec(
 		s.WriteString("export type ")
 		s.WriteString(ts.Name.Name)
 		s.WriteString(" = ")
-		g.writeType(s, ts.Type, 0, true)
+		g.writeType(s, ts.Type, nil, 0, true)
 		s.WriteString(";")
 
 	}
@@ -185,7 +185,7 @@ func (g *PackageGenerator) writeValueSpec(
 			s.WriteString(": ")
 
 			tempSB := &strings.Builder{}
-			g.writeType(tempSB, vs.Type, 0, true)
+			g.writeType(tempSB, vs.Type, nil, 0, true)
 			typeString := tempSB.String()
 
 			s.WriteString(typeString)
@@ -200,7 +200,8 @@ func (g *PackageGenerator) writeValueSpec(
 		if hasExplicitValue {
 			val := vs.Values[i]
 			tempSB := &strings.Builder{}
-			g.writeType(tempSB, val, 0, true)
+			// log.Println("const:", name.Name, reflect.TypeOf(val), val)
+			g.writeType(tempSB, val, nil, 0, false)
 			group.groupValue = tempSB.String()
 		}
 

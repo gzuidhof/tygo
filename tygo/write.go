@@ -14,6 +14,21 @@ var validJSNameRegexp = regexp.MustCompile(`(?m)^[\pL_][\pL\pN_]*$`)
 var backquoteEscapeRegexp = regexp.MustCompile(`([$\\])`)
 var octalPrefixRegexp = regexp.MustCompile(`^0[0-7]`)
 
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_precedence#table
+var jsNumberOperatorPrecedence = map[token.Token]int{
+	token.MUL:     6,
+	token.QUO:     6,
+	token.REM:     6,
+	token.ADD:     5,
+	token.SUB:     5,
+	token.SHL:     4,
+	token.SHR:     4,
+	token.AND:     3,
+	token.AND_NOT: 3,
+	token.OR:      2,
+	token.XOR:     1,
+}
+
 func validJSName(n string) bool {
 	return validJSNameRegexp.MatchString(n)
 }
@@ -40,15 +55,17 @@ func (g *PackageGenerator) writeIndent(s *strings.Builder, depth int) {
 func (g *PackageGenerator) writeType(
 	s *strings.Builder,
 	t ast.Expr,
+	p ast.Expr,
 	depth int,
 	optionalParens bool,
 ) {
+	// log.Println("writeType:", reflect.TypeOf(t), t)
 	switch t := t.(type) {
 	case *ast.StarExpr:
 		if optionalParens {
 			s.WriteByte('(')
 		}
-		g.writeType(s, t.X, depth, false)
+		g.writeType(s, t.X, t, depth, false)
 		s.WriteString(" | undefined")
 		if optionalParens {
 			s.WriteByte(')')
@@ -58,7 +75,7 @@ func (g *PackageGenerator) writeType(
 			s.WriteString("string")
 			break
 		}
-		g.writeType(s, t.Elt, depth, true)
+		g.writeType(s, t.Elt, t, depth, true)
 		s.WriteString("[]")
 	case *ast.StructType:
 		s.WriteString("{\n")
@@ -85,15 +102,15 @@ func (g *PackageGenerator) writeType(
 		}
 	case *ast.MapType:
 		s.WriteString("{ [key: ")
-		g.writeType(s, t.Key, depth, false)
+		g.writeType(s, t.Key, t, depth, false)
 		s.WriteString("]: ")
-		g.writeType(s, t.Value, depth, false)
+		g.writeType(s, t.Value, t, depth, false)
 		s.WriteByte('}')
 	case *ast.BasicLit:
 		switch t.Kind {
 		case token.STRING:
-		if strings.HasPrefix(t.Value, "`") {
-			t.Value = backquoteEscapeRegexp.ReplaceAllString(t.Value, `\$1`)
+			if strings.HasPrefix(t.Value, "`") {
+				t.Value = backquoteEscapeRegexp.ReplaceAllString(t.Value, `\$1`)
 			}
 		case token.INT:
 			if octalPrefixRegexp.MatchString(t.Value) {
@@ -103,14 +120,31 @@ func (g *PackageGenerator) writeType(
 		s.WriteString(t.Value)
 	case *ast.ParenExpr:
 		s.WriteByte('(')
-		g.writeType(s, t.X, depth, false)
+		g.writeType(s, t.X, t, depth, false)
 		s.WriteByte(')')
 	case *ast.BinaryExpr:
-		g.writeType(s, t.X, depth, false)
+		inParen := false
+		switch p := p.(type) {
+		case *ast.BinaryExpr:
+			if /* goOperatorPrecedence[t.Op] != goOperatorPrecedence[p.Op] && */ jsNumberOperatorPrecedence[t.Op] < jsNumberOperatorPrecedence[p.Op] {
+				inParen = true
+			}
+		}
+		if inParen {
+			s.WriteByte('(')
+		}
+		g.writeType(s, t.X, t, depth, false)
 		s.WriteByte(' ')
-		s.WriteString(t.Op.String())
-		s.WriteByte(' ')
-		g.writeType(s, t.Y, depth, false)
+		if t.Op == token.AND_NOT {
+			s.WriteString("& ~")
+		} else {
+			s.WriteString(t.Op.String())
+			s.WriteByte(' ')
+		}
+		g.writeType(s, t.Y, t, depth, false)
+		if inParen {
+			s.WriteByte(')')
+		}
 	case *ast.InterfaceType:
 		g.writeInterfaceFields(s, t.Methods.List, depth+1)
 	case *ast.CallExpr, *ast.FuncType, *ast.ChanType:
@@ -120,32 +154,32 @@ func (g *PackageGenerator) writeType(
 		case token.TILDE:
 			// We just ignore the tilde token, in Typescript extended types are
 			// put into the generic typing itself, which we can't support yet.
-			g.writeType(s, t.X, depth, false)
+			g.writeType(s, t.X, t, depth, false)
 		case token.XOR:
 			s.WriteString("~")
-			g.writeType(s, t.X, depth, false)
+			g.writeType(s, t.X, t, depth, false)
 		case token.ADD, token.SUB, token.NOT:
 			s.WriteString(t.Op.String())
-			g.writeType(s, t.X, depth, false)
+			g.writeType(s, t.X, t, depth, false)
 		default:
 			err := fmt.Errorf("unhandled unary expr: %v\n %T", t, t)
 			fmt.Println(err)
 			panic(err)
 		}
 	case *ast.IndexListExpr:
-		g.writeType(s, t.X, depth, false)
+		g.writeType(s, t.X, t, depth, false)
 		s.WriteByte('<')
 		for i, index := range t.Indices {
-			g.writeType(s, index, depth, false)
+			g.writeType(s, index, t, depth, false)
 			if i != len(t.Indices)-1 {
 				s.WriteString(", ")
 			}
 		}
 		s.WriteByte('>')
 	case *ast.IndexExpr:
-		g.writeType(s, t.X, depth, false)
+		g.writeType(s, t.X, t, depth, false)
 		s.WriteByte('<')
-		g.writeType(s, t.Index, depth, false)
+		g.writeType(s, t.Index, t, depth, false)
 		s.WriteByte('>')
 	default:
 		err := fmt.Errorf("unhandled: %s\n %T", t, t)
@@ -160,7 +194,7 @@ func (g *PackageGenerator) writeTypeParamsFields(s *strings.Builder, fields []*a
 		for j, ident := range f.Names {
 			s.WriteString(ident.Name)
 			s.WriteString(" extends ")
-			g.writeType(s, f.Type, 0, true)
+			g.writeType(s, f.Type, nil, 0, true)
 
 			if i != len(fields)-1 || j != len(f.Names)-1 {
 				s.WriteString(", ")
@@ -200,7 +234,7 @@ func (g *PackageGenerator) writeInterfaceFields(
 			g.writeCommentGroupIfNotNil(s, f.Doc, depth+1)
 		}
 		g.writeIndent(s, depth+1)
-		g.writeType(s, f.Type, depth, false)
+		g.writeType(s, f.Type, nil, depth, false)
 
 		if f.Comment != nil && g.PreserveTypeComments() {
 			s.WriteString(" // ")
@@ -309,7 +343,7 @@ func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.F
 		s.WriteString(": ")
 
 		if tstype == "" {
-			g.writeType(s, f.Type, depth, false)
+			g.writeType(s, f.Type, nil, depth, false)
 		} else {
 			s.WriteString(tstype)
 		}
