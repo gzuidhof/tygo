@@ -1,10 +1,12 @@
 package tygo
 
 import (
+	"encoding/json"
 	"fmt"
 	"go/ast"
 	"go/token"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/fatih/structtag"
@@ -117,7 +119,32 @@ func (g *PackageGenerator) writeType(
 				t.Value = "0o" + t.Value[1:]
 			}
 		}
-		s.WriteString(t.Value)
+		if t.Kind == token.CHAR {
+			var char rune
+			if strings.HasPrefix(t.Value, `'\x`) ||
+				strings.HasPrefix(t.Value, `'\u`) ||
+				strings.HasPrefix(t.Value, `'\U`) {
+				i32, err := strconv.ParseInt(t.Value[3:len(t.Value)-1], 16, 32)
+				if err != nil {
+					panic(err)
+				}
+				char = rune(i32)
+			} else {
+				var data []byte
+				data = append(data, '"')
+				data = append(data, []byte(t.Value[1:len(t.Value)-1])...)
+				data = append(data, '"')
+				var s string
+				err := json.Unmarshal(data, &s)
+				if err != nil {
+					panic(err)
+				}
+				char = []rune(s)[0]
+			}
+			s.WriteString(fmt.Sprintf("%d /* %s */", char, t.Value))
+		} else {
+			s.WriteString(t.Value)
+		}
 	case *ast.ParenExpr:
 		s.WriteByte('(')
 		g.writeType(s, t.X, t, depth, false)
