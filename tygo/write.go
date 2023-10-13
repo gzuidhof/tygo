@@ -15,6 +15,7 @@ import (
 var validJSNameRegexp = regexp.MustCompile(`(?m)^[\pL_][\pL\pN_]*$`)
 var backquoteEscapeRegexp = regexp.MustCompile(`([$\\])`)
 var octalPrefixRegexp = regexp.MustCompile(`^0[0-7]`)
+var unicode8Regexp = regexp.MustCompile(`\\\\|\\U[\da-fA-F]{8}`)
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_precedence#table
 var jsNumberOperatorPrecedence = map[token.Token]int{
@@ -110,16 +111,11 @@ func (g *PackageGenerator) writeType(
 		s.WriteByte('}')
 	case *ast.BasicLit:
 		switch t.Kind {
-		case token.STRING:
-			if strings.HasPrefix(t.Value, "`") {
-				t.Value = backquoteEscapeRegexp.ReplaceAllString(t.Value, `\$1`)
-			}
 		case token.INT:
 			if octalPrefixRegexp.MatchString(t.Value) {
 				t.Value = "0o" + t.Value[1:]
 			}
-		}
-		if t.Kind == token.CHAR {
+		case token.CHAR:
 			var char rune
 			if strings.HasPrefix(t.Value, `'\x`) ||
 				strings.HasPrefix(t.Value, `'\u`) ||
@@ -141,10 +137,24 @@ func (g *PackageGenerator) writeType(
 				}
 				char = []rune(s)[0]
 			}
-			s.WriteString(fmt.Sprintf("%d /* %s */", char, t.Value))
-		} else {
-			s.WriteString(t.Value)
+			if char > 0xFFFF {
+				t.Value = fmt.Sprintf("0x%08X /* %s */", char, t.Value)
+			} else {
+				t.Value = fmt.Sprintf("0x%04X /* %s */", char, t.Value)
+			}
+		case token.STRING:
+			if strings.HasPrefix(t.Value, "`") {
+				t.Value = backquoteEscapeRegexp.ReplaceAllString(t.Value, `\$1`)
+			} else {
+				t.Value = unicode8Regexp.ReplaceAllStringFunc(t.Value, func(s string) string {
+					if len(s) == 10 {
+						s = fmt.Sprintf("\\u{%s}", strings.ToUpper(s[2:]))
+					}
+					return s
+				})
+			}
 		}
+		s.WriteString(t.Value)
 	case *ast.ParenExpr:
 		s.WriteByte('(')
 		g.writeType(s, t.X, t, depth, false)
