@@ -13,8 +13,8 @@ export const FourString: string = "four";
 export const AlsoFourString: string = "four";
 export const Five = 5;
 export const FiveAgain = 5;
-export const Sixteen = 16;
-export const Seventeen = 17;
+export const Sixteen = 10 + 6;
+export const Seventeen = 11 + 6;
 
 //////////
 // source: misc.go
