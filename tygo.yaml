@@ -50,5 +50,8 @@ packages:
     flavor: "yaml"
   - path: "github.com/gzuidhof/tygo/examples/interface"
   - path: "github.com/gzuidhof/tygo/examples/directive"
+  - path: "github.com/gzuidhof/tygo/examples/emit"
+    exclude_files: 
+      - "excluded.go"
 
 
