@@ -197,6 +197,60 @@ export interface Book {
 
 You could use the `frontmatter` field in the config to inject `export type Genre = "novel" | "crime" | "fantasy"` at the top of the file, and use `tstype:"Genre"`. I personally prefer that as we may use the `Genre` type more than once.
 
+**emit directive**
+
+Another way to generate types that cannot be directly represented in Go is to use a `//tygo:emit` directive to 
+directly emit literal TS code.
+The directive can be used in two ways. A `tygo:emit` directive on a struct will emit the remainder of the directive 
+text before the struct.
+```golang
+// Golang input
+
+//tygo:emit export type Genre = "novel" | "crime" | "fantasy"
+type Book struct {
+	Title    string    `json:"title"`
+	Genre    string    `json:"genre" tstype:"Genre"`
+}
+```
+
+```typescript
+export type Genre = "novel" | "crime" | "fantasy"
+
+export interface Book {
+  title: string;
+  genre: Genre;
+}
+```
+
+A `//tygo:emit` directive on a string var will emit the contents of the var, useful for multi-line content.
+```golang
+//tygo:emit
+var _ = `export type StructAsTuple=[
+  a:number, 
+  b:number, 
+  c:string,
+]
+`
+type CustomMarshalled struct {
+  Content []StructAsTuple `json:"content"`
+}
+```
+
+```typescript
+export type StructAsTuple=[
+  a:number, 
+  b:number, 
+  c:string,
+]
+
+export interface CustomMarshalled {
+  content: StructAsTuple[];
+}
+
+```
+
+Generating types this way is particularly useful for tuple types, because a comma cannot be used in the `tstype` tag.
+
 ### Required fields
 
 Pointer type fields usually become optional in the Typescript output, but sometimes you may want to require it regardless.
