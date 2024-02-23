@@ -22,7 +22,8 @@ func (g *PackageGenerator) writeCommentGroupIfNotNil(s *strings.Builder, f *ast.
 func (c *PackageGenerator) writeDirective(s *strings.Builder, cg *ast.CommentGroup) {
 	for _, cm := range cg.List {
 		if strings.HasPrefix(cm.Text, "//tygo:emit") {
-			s.WriteString(strings.TrimPrefix(cm.Text, "//tygo:emit"))
+			// remove the separator whitespace but leave extra whitespace for indentation
+			s.WriteString(strings.TrimPrefix(cm.Text, "//tygo:emit")[1:])
 			s.WriteString("\n")
 		}
 	}

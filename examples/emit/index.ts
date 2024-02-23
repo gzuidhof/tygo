@@ -3,10 +3,17 @@
 //////////
 // source: custom.go
 
- export type StructAsTuple=[a:number, b:number, c:string]
+export type OtherStructAsTuple=[
+  a:number, 
+  b:number, 
+  c:string,
+]
+
+export type StructAsTuple=[a:number, b:number, c:string]
 /**
- * CustomMarshalled illustrates getting tygo to emit literal text/
+ * CustomMarshalled illustrates getting tygo to emit literal text
  * This solves the problem of a struct field being marshalled into a tuple.
+ * emit directive on a struct emits the remainder of the directive line
  */
 export interface CustomMarshalled {
   content: StructAsTuple[];
