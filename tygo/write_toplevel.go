@@ -17,7 +17,7 @@ type groupContext struct {
 	iotaValue            int
 }
 
-// isEMitVar returns true if dec is a string var with a tygo:emit directive.
+// isEmitVar returns true if dec is a string var with a tygo:emit directive.
 func (g *PackageGenerator) isEmitVar(dec *ast.GenDecl) bool {
 	if dec.Tok != token.VAR || dec.Doc == nil {
 		return false

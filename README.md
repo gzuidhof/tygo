@@ -197,7 +197,7 @@ export interface Book {
 
 You could use the `frontmatter` field in the config to inject `export type Genre = "novel" | "crime" | "fantasy"` at the top of the file, and use `tstype:"Genre"`. I personally prefer that as we may use the `Genre` type more than once.
 
-**emit directive**
+**`tygo:emit` directive**
 
 Another way to generate types that cannot be directly represented in Go is to use a `//tygo:emit` directive to 
 directly emit literal TS code.
