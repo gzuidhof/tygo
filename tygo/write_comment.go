@@ -19,9 +19,20 @@ func (g *PackageGenerator) writeCommentGroupIfNotNil(s *strings.Builder, f *ast.
 	}
 }
 
+func (c *PackageGenerator) writeDirective(s *strings.Builder, cg *ast.CommentGroup) {
+	for _, cm := range cg.List {
+		if strings.HasPrefix(cm.Text, "//tygo:emit") {
+			// remove the separator whitespace but leave extra whitespace for indentation
+			s.WriteString(strings.TrimPrefix(cm.Text, "//tygo:emit")[1:])
+			s.WriteString("\n")
+		}
+	}
+}
+
 func (g *PackageGenerator) writeCommentGroup(s *strings.Builder, cg *ast.CommentGroup, depth int) {
 	docLines := strings.Split(cg.Text(), "\n")
 
+	g.writeDirective(s, cg)
 	if len(cg.List) > 0 && cg.Text() == "" { // This is a directive comment like //go:embed
 		s.WriteByte('\n')
 		return

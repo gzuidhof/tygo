@@ -26,15 +26,25 @@ func (g *PackageGenerator) Generate() (string, error) {
 
 			// GenDecl can be an import, type, var, or const expression
 			case *ast.GenDecl:
-				if x.Tok == token.VAR || x.Tok == token.IMPORT {
+				if x.Tok == token.IMPORT {
 					return false
+				}
+				isEmit := false
+				if x.Tok == token.VAR {
+					isEmit = g.isEmitVar(x)
+					if !isEmit {
+						return false
+					}
 				}
 
 				if first {
 					g.writeFileSourceHeader(s, filepaths[i], file)
 					first = false
 				}
-
+				if isEmit {
+					g.emitVar(s, x)
+					return false
+				}
 				g.writeGroupDecl(s, x)
 				return false
 			}

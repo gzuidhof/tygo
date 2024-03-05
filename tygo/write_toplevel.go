@@ -17,6 +17,34 @@ type groupContext struct {
 	iotaValue            int
 }
 
+// isEmitVar returns true if dec is a string var with a tygo:emit directive.
+func (g *PackageGenerator) isEmitVar(dec *ast.GenDecl) bool {
+	if dec.Tok != token.VAR || dec.Doc == nil {
+		return false
+	}
+
+	for _, c := range dec.Doc.List {
+		if strings.HasPrefix(c.Text, "//tygo:emit") {
+			// we know it's VAR so asserting *ast.ValueSpec is OK.
+			v, ok := dec.Specs[0].(*ast.ValueSpec).Values[0].(*ast.BasicLit)
+			if !ok {
+				return false
+			}
+			return v.Kind == token.STRING
+		}
+	}
+	return false
+}
+
+// emitVar emits the text associated with dec, which is assumes to be a string var with a
+// tygo:emit directive, as tested by isEmitVar.
+func (g *PackageGenerator) emitVar(s *strings.Builder, dec *ast.GenDecl) {
+	v := dec.Specs[0].(*ast.ValueSpec).Values[0].(*ast.BasicLit).Value
+	if len(v) < 2 {
+		return
+	}
+	s.WriteString(v[1:len(v)-1] + "\n")
+}
 func (g *PackageGenerator) writeGroupDecl(s *strings.Builder, decl *ast.GenDecl) {
 	// This checks whether the declaration is a group declaration like:
 	// const (
