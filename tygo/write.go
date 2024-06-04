@@ -286,14 +286,13 @@ func (g *PackageGenerator) writeInterfaceFields(
 
 func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.Field, depth int) {
 	for _, f := range fields {
-		// fmt.Println(f.Type)
 		optional := false
 		required := false
 		readonly := false
 
 		var fieldName string
 		if len(f.Names) == 0 { // anonymous field
-			if name, valid := getAnonymousFieldName(f.Type); valid {
+			if name, valid := getAnonymousFieldName(f.Type, g.conf); valid {
 				fieldName = name
 			}
 		}
@@ -308,6 +307,7 @@ func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.F
 		var tstype string
 		if f.Tag != nil {
 			tags, err := structtag.Parse(f.Tag.Value[1 : len(f.Tag.Value)-1])
+
 			if err != nil {
 				panic(err)
 			}
@@ -334,6 +334,7 @@ func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.F
 			tstypeTag, err := tags.Get("tstype")
 			if err == nil {
 				tstype = tstypeTag.Name
+
 				if tstype == "-" || tstypeTag.HasOption("extends") {
 					continue
 				}

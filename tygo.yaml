@@ -2,26 +2,26 @@
 # and some other packages.
 
 packages:
-  - path: "github.com/gzuidhof/tygo/examples/bookstore"
+  - path: "github.com/vincenzomerolla/tygo/examples/bookstore"
     type_mappings:
       time.Time: "string /* RFC 3339 formatted */"
       null.String: "string | null"
       uuid.UUID: "string"
-  - path: "github.com/gzuidhof/tygo/examples/abstract"
+  - path: "github.com/vincenzomerolla/tygo/examples/abstract"
     indent: "  "
     exclude_files:
       - "excluded.go"
     frontmatter:
       | # We can define some additional text to put at the start of the file.
       export type Something = string | number;
-  - path: "github.com/gzuidhof/tygo/examples/simple"
+  - path: "github.com/vincenzomerolla/tygo/examples/simple"
     fallback_type: unknown
-  - path: "github.com/gzuidhof/tygo/examples/inheritance"
+  - path: "github.com/vincenzomerolla/tygo/examples/inheritance"
     fallback_type: unknown
     frontmatter:
       | # We can define some additional text to put at the start of the file.
       import * as bookapp from "../bookstore"
-  - path: "github.com/gzuidhof/tygo/examples/embed"
+  - path: "github.com/vincenzomerolla/tygo/examples/embed"
     fallback_type: unknown
     type_mappings:
       bookapp.Book: "bookapp.Book"
@@ -29,12 +29,12 @@ packages:
     frontmatter:
       | # We can define some additional text to put at the start of the file.
       import * as bookapp from "../bookstore"
-  - path: "github.com/gzuidhof/tygo/examples/generic"
+  - path: "github.com/vincenzomerolla/tygo/examples/generic"
     fallback_type: unknown
-  - path: "github.com/gzuidhof/tygo/examples/preserveTypeComments"
+  - path: "github.com/vincenzomerolla/tygo/examples/preserveTypeComments"
     fallback_type: unknown
     preserve_comments: "types"
-  - path: "github.com/gzuidhof/tygo/examples/noComments"
+  - path: "github.com/vincenzomerolla/tygo/examples/noComments"
     fallback_type: unknown
     preserve_comments: "none"
   # Generate the "net/http" output example, note the output is in gitignore as it's pretty big
@@ -45,13 +45,11 @@ packages:
   # Generate the "time" output example, note the output is in gitignore as it's pretty big
   - path: "time"
     output_path: "./examples/time/index.ts"
-  - path: "github.com/gzuidhof/tygo/examples/yaml"
+  - path: "github.com/vincenzomerolla/tygo/examples/yaml"
     output_path: "./examples/yaml/index.ts"
     flavor: "yaml"
-  - path: "github.com/gzuidhof/tygo/examples/interface"
-  - path: "github.com/gzuidhof/tygo/examples/directive"
-  - path: "github.com/gzuidhof/tygo/examples/emit"
-    exclude_files: 
+  - path: "github.com/vincenzomerolla/tygo/examples/interface"
+  - path: "github.com/vincenzomerolla/tygo/examples/directive"
+  - path: "github.com/vincenzomerolla/tygo/examples/emit"
+    exclude_files:
       - "excluded.go"
-
-

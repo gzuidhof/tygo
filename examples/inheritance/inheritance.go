@@ -1,7 +1,7 @@
 package inheritance
 
 import (
-	bookapp "github.com/gzuidhof/tygo/examples/bookstore"
+	bookapp "github.com/vincenzomerolla/tygo/examples/bookstore"
 )
 
 type Base struct {

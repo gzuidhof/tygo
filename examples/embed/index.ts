@@ -9,7 +9,6 @@ import * as bookapp from "../bookstore"
  */
 export type TokenType = string;
 export interface StructEmbed extends Base {
-  tokenType: TokenType; // built-in type field without `tstype:"extends"`
   reference: Reference; // embed struct without `tstype:"extends"`
   other_reference: Reference;
   bar: string;

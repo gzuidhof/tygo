@@ -1,7 +1,7 @@
 // This example is here to reproduce Github issue #26
 // Directive comments should not be output.
 //
-// See https://github.com/gzuidhof/tygo/issues/26
+// See https://github.com/vincenzomerolla/tygo/issues/26
 package directive
 
 // Comment above a directive

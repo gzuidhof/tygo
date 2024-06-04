@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/ast"
 	"go/token"
+	"slices"
 	"strings"
 
 	"github.com/fatih/structtag"
@@ -82,7 +83,7 @@ func (g *PackageGenerator) writeGroupDecl(s *strings.Builder, decl *ast.GenDecl)
 func (g *PackageGenerator) writeSpec(s *strings.Builder, spec ast.Spec, group *groupContext) {
 	// e.g. "type Foo struct {}" or "type Bar = string"
 	ts, ok := spec.(*ast.TypeSpec)
-	if ok && ts.Name.IsExported() {
+	if ok && (slices.Contains(g.conf.AllowedUnexportedFields, ts.Name.Name) || ts.Name.IsExported()) {
 		g.writeTypeSpec(s, ts, group)
 	}
 
@@ -167,7 +168,7 @@ func (g *PackageGenerator) writeTypeInheritanceSpec(s *strings.Builder, fields [
 				continue
 			}
 
-			name, valid := getInheritedType(f.Type, tstypeTag)
+			name, valid := getInheritedType(f.Type, tstypeTag, g.conf)
 			if valid {
 				inheritances = append(inheritances, name)
 			}
@@ -191,7 +192,7 @@ func (g *PackageGenerator) writeValueSpec(
 		if name.Name == "_" {
 			continue
 		}
-		if !name.IsExported() {
+		if !(slices.Contains(g.conf.AllowedUnexportedFields, name.Name) || name.IsExported()) {
 			continue
 		}
 
@@ -250,7 +251,7 @@ func (g *PackageGenerator) writeValueSpec(
 	}
 }
 
-func getInheritedType(f ast.Expr, tag *structtag.Tag) (name string, valid bool) {
+func getInheritedType(f ast.Expr, tag *structtag.Tag, conf *PackageConfig) (name string, valid bool) {
 	switch ft := f.(type) {
 	case *ast.Ident:
 		if ft.Obj != nil && ft.Obj.Decl != nil {
@@ -262,17 +263,17 @@ func getInheritedType(f ast.Expr, tag *structtag.Tag) (name string, valid bool) 
 			}
 		} else {
 			// Types defined in the Go file after the parsed file in the same package
-			valid = token.IsExported(ft.Name)
+			valid = (slices.Contains(conf.AllowedUnexportedFields, ft.Name) || token.IsExported(ft.Name))
 			name = ft.Name
 		}
 	case *ast.IndexExpr:
-		name, valid = getInheritedType(ft.X, tag)
+		name, valid = getInheritedType(ft.X, tag, conf)
 		if valid {
 			generic := getIdent(ft.Index.(*ast.Ident).Name)
 			name += fmt.Sprintf("<%s>", generic)
 		}
 	case *ast.IndexListExpr:
-		name, valid = getInheritedType(ft.X, tag)
+		name, valid = getInheritedType(ft.X, tag, conf)
 		if valid {
 			generic := ""
 			for _, index := range ft.Indices {
@@ -284,7 +285,7 @@ func getInheritedType(f ast.Expr, tag *structtag.Tag) (name string, valid bool) 
 		valid = ft.Sel.IsExported()
 		name = fmt.Sprintf("%s.%s", ft.X, ft.Sel)
 	case *ast.StarExpr:
-		name, valid = getInheritedType(ft.X, tag)
+		name, valid = getInheritedType(ft.X, tag, conf)
 		if valid {
 			// If the type is not required, mark as optional inheritance
 			if !tag.HasOption("required") {
@@ -296,28 +297,28 @@ func getInheritedType(f ast.Expr, tag *structtag.Tag) (name string, valid bool) 
 	return
 }
 
-func getAnonymousFieldName(f ast.Expr) (name string, valid bool) {
+func getAnonymousFieldName(f ast.Expr, conf *PackageConfig) (name string, valid bool) {
 	switch ft := f.(type) {
 	case *ast.Ident:
 		name = ft.Name
 		if ft.Obj != nil && ft.Obj.Decl != nil {
 			dcl, ok := ft.Obj.Decl.(*ast.TypeSpec)
 			if ok {
-				valid = dcl.Name.IsExported()
+				valid = (slices.Contains(conf.AllowedUnexportedFields, dcl.Name.Name) && dcl.Name.IsExported())
 			}
 		} else {
 			// Types defined in the Go file after the parsed file in the same package
 			valid = token.IsExported(name)
 		}
 	case *ast.IndexExpr:
-		return getAnonymousFieldName(ft.X)
+		return getAnonymousFieldName(ft.X, conf)
 	case *ast.IndexListExpr:
-		return getAnonymousFieldName(ft.X)
+		return getAnonymousFieldName(ft.X, conf)
 	case *ast.SelectorExpr:
 		valid = ft.Sel.IsExported()
 		name = ft.Sel.String()
 	case *ast.StarExpr:
-		return getAnonymousFieldName(ft.X)
+		return getAnonymousFieldName(ft.X, conf)
 	}
 
 	return

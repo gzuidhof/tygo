@@ -50,6 +50,8 @@ type PackageConfig struct {
 	// In "types" mode, only type comments are preserved.
 	// If "none" is supplied, no comments are preserved.
 	PreserveComments string `yaml:"preserve_comments"`
+
+	AllowedUnexportedFields []string `yaml:"allowed_unexported_fields"`
 }
 
 type Config struct {

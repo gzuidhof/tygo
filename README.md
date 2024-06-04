@@ -10,9 +10,9 @@ It preserves comments, understands constants and also supports non-struct `type`
 
 ```shell
 # Go >= 1.17
-go install github.com/gzuidhof/tygo@latest
+go install github.com/vincenzomerolla/tygo@latest
 # Go < 1.17:
-go install github.com/gzuidhof/tygo
+go install github.com/vincenzomerolla/tygo
 ```
 
 ## Example
@@ -105,7 +105,7 @@ Create a file `tygo.yaml` in which you specify which packages are to be converte
 
 ```yaml
 packages:
-  - path: "github.com/gzuidhof/tygo/examples/bookstore"
+  - path: "github.com/vincenzomerolla/tygo/examples/bookstore"
     type_mappings:
       time.Time: "string /* RFC3339 */"
       null.String: "null | string"
@@ -128,7 +128,7 @@ The output Typescript file will be next to the Go source files.
 config := &tygo.Config{
   Packages: []*tygo.PackageConfig{
       &tygo.PackageConfig{
-          Path: "github.com/gzuidhof/tygo/examples/bookstore",
+          Path: "github.com/vincenzomerolla/tygo/examples/bookstore",
       },
   },
 }
@@ -199,10 +199,11 @@ You could use the `frontmatter` field in the config to inject `export type Genre
 
 **`tygo:emit` directive**
 
-Another way to generate types that cannot be directly represented in Go is to use a `//tygo:emit` directive to 
+Another way to generate types that cannot be directly represented in Go is to use a `//tygo:emit` directive to
 directly emit literal TS code.
-The directive can be used in two ways. A `tygo:emit` directive on a struct will emit the remainder of the directive 
+The directive can be used in two ways. A `tygo:emit` directive on a struct will emit the remainder of the directive
 text before the struct.
+
 ```golang
 // Golang input
 
@@ -214,7 +215,7 @@ type Book struct {
 ```
 
 ```typescript
-export type Genre = "novel" | "crime" | "fantasy"
+export type Genre = "novel" | "crime" | "fantasy";
 
 export interface Book {
   title: string;
@@ -223,11 +224,12 @@ export interface Book {
 ```
 
 A `//tygo:emit` directive on a string var will emit the contents of the var, useful for multi-line content.
+
 ```golang
 //tygo:emit
 var _ = `export type StructAsTuple=[
-  a:number, 
-  b:number, 
+  a:number,
+  b:number,
   c:string,
 ]
 `
@@ -237,16 +239,11 @@ type CustomMarshalled struct {
 ```
 
 ```typescript
-export type StructAsTuple=[
-  a:number, 
-  b:number, 
-  c:string,
-]
+export type StructAsTuple = [a: number, b: number, c: string];
 
 export interface CustomMarshalled {
   content: StructAsTuple[];
 }
-
 ```
 
 Generating types this way is particularly useful for tuple types, because a comma cannot be used in the `tstype` tag.
