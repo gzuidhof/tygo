@@ -50,6 +50,12 @@ type PackageConfig struct {
 	// In "types" mode, only type comments are preserved.
 	// If "none" is supplied, no comments are preserved.
 	PreserveComments string `yaml:"preserve_comments"`
+
+	// Set the optional type (null or undefined).
+	// Supported values: "default", "undefined" (same as "default"), "" (same as "default"), "null".
+	// Default is "undefined".
+	// Useful for usage with JSON marshalers that output null for optional fields (e.g. gofiber JSON).
+	OptionalType string `yaml:"optional_type"`
 }
 
 type Config struct {
@@ -82,6 +88,12 @@ func (c Config) PackageConfig(packagePath string) *PackageConfig {
 			if err != nil {
 				log.Fatalf("Invalid config for package %s: %s", packagePath, err)
 			}
+
+			pc.OptionalType, err = normalizeOptionalType(pc.OptionalType)
+			if err != nil {
+				log.Fatalf("Invalid config for package %s: %s", packagePath, err)
+			}
+
 			return pc
 		}
 	}
@@ -110,6 +122,17 @@ func normalizePreserveComments(preserveComments string) (string, error) {
 		return "none", nil
 	default:
 		return "", fmt.Errorf("unsupported preserve_comments: %s", preserveComments)
+	}
+}
+
+func normalizeOptionalType(optional string) (string, error) {
+	switch optional {
+	case "", "default", "undefined":
+		return "undefined", nil
+	case "null":
+		return "null", nil
+	default:
+		return "", fmt.Errorf("unsupported optional: %s", optional)
 	}
 }
 
