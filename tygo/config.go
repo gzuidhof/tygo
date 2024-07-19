@@ -50,6 +50,9 @@ type PackageConfig struct {
 	// In "types" mode, only type comments are preserved.
 	// If "none" is supplied, no comments are preserved.
 	PreserveComments string `yaml:"preserve_comments"`
+
+	// Default interface for Typescript-generated interfaces to extend.
+	Extends string `yaml:"extends"`
 }
 
 type Config struct {
