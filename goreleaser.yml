@@ -1,3 +1,4 @@
+version: 2
 project_name: tygo
 builds:
   - binary: tygo
@@ -7,6 +8,7 @@ builds:
       - linux
     goarch:
       - amd64
+      - arm64
     ldflags:
       - -s -w -X github.com/gzuidhof/tygo/cmd.version={{.Version}} -X github.com/gzuidhof/tygo/cmd.commit={{.Commit}} -X github.com/gzuidhof/tygo/cmd.commitDate={{.CommitDate}}
 archives:
