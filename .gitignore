@@ -17,3 +17,5 @@
 examples/time
 examples/tygo
 examples/http
+
+dist/
