@@ -53,5 +53,6 @@ packages:
   - path: "github.com/gzuidhof/tygo/examples/emit"
     exclude_files: 
       - "excluded.go"
+  - path: "github.com/gzuidhof/tygo/examples/rune"
 
 
