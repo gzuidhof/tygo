@@ -373,7 +373,7 @@ func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.F
 			f.Type = t.X
 		}
 
-		if optional {
+		if optional && g.conf.OptionalType == "undefined" {
 			s.WriteByte('?')
 		}
 
@@ -381,6 +381,9 @@ func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.F
 
 		if tstype == "" {
 			g.writeType(s, f.Type, nil, depth, false)
+			if optional && g.conf.OptionalType == "null" {
+				s.WriteString(" | null")
+			}
 		} else {
 			s.WriteString(tstype)
 		}
