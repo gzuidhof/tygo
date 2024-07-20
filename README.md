@@ -162,6 +162,10 @@ packages:
     # in the output.
     exclude_files:
       - "private_stuff.go"
+
+    # Package that the generates Typescript types should extend. This is useful when
+    # attaching your types to a generic ORM.
+    extends: "SomeType"
 ```
 
 See also the source file [tygo/config.go](./tygo/config.go).

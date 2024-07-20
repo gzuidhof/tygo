@@ -51,6 +51,9 @@ type PackageConfig struct {
 	// If "none" is supplied, no comments are preserved.
 	PreserveComments string `yaml:"preserve_comments"`
 
+	// Default interface for Typescript-generated interfaces to extend.
+	Extends string `yaml:"extends"`
+
 	// Set the optional type (null or undefined).
 	// Supported values: "default", "undefined" (same as "default"), "" (same as "default"), "null".
 	// Default is "undefined".

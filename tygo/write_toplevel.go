@@ -113,6 +113,10 @@ func (g *PackageGenerator) writeTypeSpec(
 	if isStruct {
 		s.WriteString("export interface ")
 		s.WriteString(ts.Name.Name)
+		if g.conf.Extends != "" {
+			s.WriteString(" extends ")
+			s.WriteString(g.conf.Extends)
+		}
 
 		if ts.TypeParams != nil {
 			g.writeTypeParamsFields(s, ts.TypeParams.List)
