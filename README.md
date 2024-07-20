@@ -4,15 +4,12 @@ Tygo is a tool for generating Typescript typings from Golang source files that j
 
 It preserves comments, understands constants and also supports non-struct `type` expressions. It's perfect for generating equivalent types for a Golang REST API to be used in your front-end codebase.
 
-**🚀 Now supports Golang 1.18 generic types, struct inheritance**
+**🚀 Supports Golang 1.18 generic types and struct inheritance**
 
 ## Installation
 
 ```shell
-# Go >= 1.17
 go install github.com/gzuidhof/tygo@latest
-# Go < 1.17:
-go install github.com/gzuidhof/tygo
 ```
 
 ## Example
@@ -395,6 +392,7 @@ export interface ABCD<
 ## YAML support
 
 Tygo supports generating typings for YAML-serializable objects that can be understood by Go apps.
+
 By default, Tygo will respect `yaml` Go struct tags, in addition to `json`, but it will not apply any transformations to untagged fields.
 However, the default behavior of the popular `gopkg.in/yaml.v2` package for Go structs without tags is to downcase the struct field names.
 To emulate this behavior, one can use the `flavor` configuration option:
@@ -424,10 +422,10 @@ export interface Foo {
 
 ## Related projects
 
-- [**typescriptify-golang-structs**](https://github.com/tkrajina/typescriptify-golang-structs): Probably the most popular choice. The downside of this package is that it relies on reflection rather than parsing, which means that certain things can't be kept such as comments without adding a bunch of tags to your structs. The CLI generates a Go file which is then executed and reflected on, and its library requires you to manually specify all types that should be converted.
-- [**go2ts**](https://github.com/StirlingMarketingGroup/go2ts): A transpiler with a web interface, this project was based off this project. It's perfect for quick one-off transpilations. There is no CLI, no support for `const` and there are no ways to customize the output.
+- [**typescriptify-golang-structs**](https://github.com/tkrajina/typescriptify-golang-structs): Probably the most popular choice. The downside of this package is that it relies on reflection rather than parsing, which means that certain things can't be kept such as comments without adding a bunch of tags to your structs. The CLI generates a Go file which is then executed and reflected on. The library requires you to manually specify all types that should be converted.
+- [**go2ts**](https://github.com/StirlingMarketingGroup/go2ts): A transpiler with a web interface, this project can be seen as an evolution of this project. It's perfect for quick one-off transpilations. There is no CLI, no support for `const` and there are no ways to customize the output.
 
-If this repository was useful for your project, consider leaving a star.
+**If `tygo` is useful for your project, consider leaving a star.**
 
 ## License
 
