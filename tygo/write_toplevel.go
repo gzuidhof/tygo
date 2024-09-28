@@ -140,6 +140,11 @@ func (g *PackageGenerator) writeTypeSpec(
 	if !isStruct && !isIdent {
 		s.WriteString("export type ")
 		s.WriteString(ts.Name.Name)
+
+		if ts.TypeParams != nil {
+			g.writeTypeParamsFields(s, ts.TypeParams.List)
+		}
+
 		s.WriteString(" = ")
 		g.writeType(s, ts.Type, nil, 0, true)
 		s.WriteString(";")
