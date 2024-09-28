@@ -1,0 +1,23 @@
+name: Test Tygo
+on:
+    pull_request:
+    push:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version:
+          - 1.22.x
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: install
+        uses: actions/setup-go@v5
+        with:
+          go-version: '${{ matrix.go-version }}'
+      - name: vet
+        run: go vet ./...
+      - name: test
+        run: go test -v -race ./...
