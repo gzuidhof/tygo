@@ -8,6 +8,8 @@ import (
 )
 
 const defaultOutputFilename = "index.ts"
+const defaultFallbackType = "any"
+const defaultPreserveComments = "default"
 
 type PackageConfig struct {
 	// The package path just like you would import it in Go
@@ -77,27 +79,12 @@ func (c Config) PackageNames() []string {
 func (c Config) PackageConfig(packagePath string) *PackageConfig {
 	for _, pc := range c.Packages {
 		if pc.Path == packagePath {
-			if pc.Indent == "" {
-				pc.Indent = "  "
-			}
-
-			var err error
-			pc.Flavor, err = normalizeFlavor(pc.Flavor)
+			pcNormalized, err := pc.Normalize()
 			if err != nil {
-				log.Fatalf("Invalid config for package %s: %s", packagePath, err)
+				log.Fatalf("Error in config for package %s: %s", packagePath, err)
 			}
 
-			pc.PreserveComments, err = normalizePreserveComments(pc.PreserveComments)
-			if err != nil {
-				log.Fatalf("Invalid config for package %s: %s", packagePath, err)
-			}
-
-			pc.OptionalType, err = normalizeOptionalType(pc.OptionalType)
-			if err != nil {
-				log.Fatalf("Invalid config for package %s: %s", packagePath, err)
-			}
-
-			return pc
+			return &pcNormalized
 		}
 	}
 	log.Fatalf("Config not found for package %s", packagePath)
@@ -167,4 +154,37 @@ func (c PackageConfig) ResolvedOutputPath(packageDir string) string {
 		return filepath.Join(c.OutputPath, defaultOutputFilename)
 	}
 	return c.OutputPath
+}
+
+// Normalize returns a new PackageConfig with default values set.
+func (pc PackageConfig) Normalize() (PackageConfig, error) {
+	if pc.Indent == "" {
+		pc.Indent = "  "
+	}
+
+	if pc.FallbackType == "" {
+		pc.FallbackType = defaultFallbackType
+	}
+
+	if pc.PreserveComments == "" {
+		pc.PreserveComments = defaultPreserveComments
+	}
+
+	var err error
+	pc.Flavor, err = normalizeFlavor(pc.Flavor)
+	if err != nil {
+		return pc, fmt.Errorf("invalid flavor config for package %s: %s", pc.Path, err)
+	}
+
+	pc.PreserveComments, err = normalizePreserveComments(pc.PreserveComments)
+	if err != nil {
+		return pc, fmt.Errorf("invalid preserve_comments config for package %s: %s", pc.Path, err)
+	}
+
+	pc.OptionalType, err = normalizeOptionalType(pc.OptionalType)
+	if err != nil {
+		return pc, fmt.Errorf("invalid optional_type config for package %s: %s", pc.Path, err)
+	}
+
+	return pc, nil
 }

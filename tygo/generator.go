@@ -2,7 +2,6 @@ package tygo
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -73,7 +72,7 @@ func (g *Tygo) Generate() error {
 			return nil
 		}
 
-		err = ioutil.WriteFile(outPath, []byte(code), 0664)
+		err = os.WriteFile(outPath, []byte(code), 0664)
 		if err != nil {
 			return nil
 		}
