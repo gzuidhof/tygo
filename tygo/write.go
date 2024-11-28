@@ -87,7 +87,7 @@ func (g *PackageGenerator) writeType(
 		s.WriteByte('}')
 	case *ast.Ident:
 		// e.g. `DurationString` type alias could be replaced with an `id.DurationString` type mapping
-		longType := fmt.Sprintf("id.%s", t.String())
+		longType := fmt.Sprintf("id_%s", t.String())
 		mappedTsType, ok := g.conf.TypeMappings[longType]
 		if ok {
 			s.WriteString(mappedTsType)

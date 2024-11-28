@@ -58,7 +58,7 @@ packages:
   # Replace the type alias `DurationString` with the type `TsDurationString`
   - path: "github.com/gzuidhof/tygo/examples/typeAlias"
     type_mappings:
-      id.DurationString: "TsDurationString"
+      id_DurationString: "TsDurationString"
     frontmatter:
       export type TsDurationString = `${number}ms` | `${number}s` | `${number}m` | `${number}h`;
 
