@@ -185,7 +185,40 @@ func (g *PackageGenerator) writeType(
 		}
 	case *ast.InterfaceType:
 		g.writeInterfaceFields(s, t.Methods.List, depth+1)
-	case *ast.CallExpr, *ast.FuncType, *ast.ChanType:
+	case *ast.FuncType:
+		// s.WriteString(g.conf.FallbackType)
+		s.WriteString("(")
+		for i, param := range t.Params.List {
+			// isVariadic := false
+			switch param.Type.(type) {
+			case *ast.Ellipsis:
+				// isVariadic = true
+				s.WriteString("...")
+			}
+			for _, ident := range param.Names {
+				s.WriteString(ident.Name)
+			}
+			if len(param.Names) == 0 {
+				fmt.Fprintf(s, "arg_%d", i)
+			}
+			s.WriteString(": ")
+			g.writeType(s, param.Type, t, depth, false)
+			// if isVariadic {
+			// 	s.WriteString("[]")
+			// }
+			if i != len(t.Params.List)-1 {
+				s.WriteString(", ")
+			}
+		}
+		s.WriteString(") => ")
+		if t.Results == nil {
+			s.WriteString("void")
+		} else if len(t.Results.List) == 1 {
+			g.writeType(s, t.Results.List[0].Type, t, depth, false)
+		} else {
+			s.WriteString(g.conf.FallbackType)
+		}
+	case *ast.CallExpr, *ast.ChanType:
 		s.WriteString(g.conf.FallbackType)
 	case *ast.UnaryExpr:
 		switch t.Op {
@@ -219,6 +252,12 @@ func (g *PackageGenerator) writeType(
 		s.WriteByte('<')
 		g.writeType(s, t.Index, t, depth, false)
 		s.WriteByte('>')
+	case *ast.Ellipsis:
+		g.writeType(s, t.Elt, t, depth, false)
+		s.WriteString("[]")
+		if !t.Ellipsis.IsValid() {
+			panic("invalid ellipsis")
+		}
 	default:
 		err := fmt.Errorf("unhandled: %s\n %T", t, t)
 		fmt.Println(err)
