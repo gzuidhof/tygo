@@ -27,6 +27,7 @@ export interface UserEntry {
   address?: string;
   nickname?: string;
   role: UserRole;
+  createdAt?: string /* RFC3339 */;
   complex: ComplexType;
 }
 export interface ListUsersResponse {

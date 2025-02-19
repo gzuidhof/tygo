@@ -1,6 +1,10 @@
 package simple
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 // Comments are kept :)
 type ComplexType map[string]map[uint16]*uint32
@@ -24,9 +28,10 @@ type UserEntry struct {
 		Bar uuid.UUID `json:"bar"`
 	} `json:"prefs"`
 
-	MaybeFieldWithStar *string  `json:"address"`
-	Nickname           string   `json:"nickname,omitempty"`
-	Role               UserRole `json:"role"`
+	MaybeFieldWithStar *string   `json:"address"`
+	Nickname           string    `json:"nickname,omitempty"`
+	Role               UserRole  `json:"role"`
+	CreatedAt          time.Time `json:"created_at,omitzero"`
 
 	Complex    ComplexType `json:"complex"`
 	unexported bool        // Unexported fields won't be in the output
