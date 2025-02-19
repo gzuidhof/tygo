@@ -320,7 +320,7 @@ func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.F
 					continue
 				}
 
-				optional = jsonTag.HasOption("omitempty")
+				optional = jsonTag.HasOption("omitempty") || jsonTag.HasOption("omitzero")
 			}
 			yamlTag, err := tags.Get("yaml")
 			if err == nil {
