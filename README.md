@@ -86,7 +86,7 @@ export interface UserEntry {
   address?: string;
   nickname?: string;
   role: UserRole;
-  createdAt?: string /* RFC3339 */;
+  created_at?: string /* RFC3339 */;
   complex: ComplexType;
 }
 export interface ListUsersResponse {
@@ -202,11 +202,10 @@ You could use the `frontmatter` field in the config to inject `export type Genre
 
 **`tygo:emit` directive**
 
-Another way to generate types that cannot be directly represented in Go is to use a `//tygo:emit` directive to
+Another way to generate types that cannot be directly represented in Go is to use a `//tygo:emit` directive to 
 directly emit literal TS code.
-The directive can be used in two ways. A `tygo:emit` directive on a struct will emit the remainder of the directive
+The directive can be used in two ways. A `tygo:emit` directive on a struct will emit the remainder of the directive 
 text before the struct.
-
 ```golang
 // Golang input
 
@@ -218,7 +217,7 @@ type Book struct {
 ```
 
 ```typescript
-export type Genre = "novel" | "crime" | "fantasy";
+export type Genre = "novel" | "crime" | "fantasy"
 
 export interface Book {
   title: string;
@@ -227,12 +226,11 @@ export interface Book {
 ```
 
 A `//tygo:emit` directive on a string var will emit the contents of the var, useful for multi-line content.
-
 ```golang
 //tygo:emit
 var _ = `export type StructAsTuple=[
-  a:number,
-  b:number,
+  a:number, 
+  b:number, 
   c:string,
 ]
 `
@@ -242,11 +240,16 @@ type CustomMarshalled struct {
 ```
 
 ```typescript
-export type StructAsTuple = [a: number, b: number, c: string];
+export type StructAsTuple=[
+  a:number, 
+  b:number, 
+  c:string,
+]
 
 export interface CustomMarshalled {
   content: StructAsTuple[];
 }
+
 ```
 
 Generating types this way is particularly useful for tuple types, because a comma cannot be used in the `tstype` tag.
