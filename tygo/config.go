@@ -80,11 +80,11 @@ func (c Config) PackageNames() []string {
 func (c Config) PackageConfig(packagePath string) *PackageConfig {
 	for _, pc := range c.Packages {
 		if pc.Path == packagePath {
+			pc.TypeMappings = c.mergeMappings(pc.TypeMappings)
 			pcNormalized, err := pc.Normalize()
 			if err != nil {
 				log.Fatalf("Error in config for package %s: %s", packagePath, err)
 			}
-			pc.TypeMappings = c.mergeMappings(pc.TypeMappings)
 
 			return &pcNormalized
 		}
