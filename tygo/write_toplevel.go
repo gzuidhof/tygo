@@ -176,9 +176,16 @@ func (g *PackageGenerator) writeTypeInheritanceSpec(s *strings.Builder, fields [
 				continue
 			}
 
-			name, valid := getInheritedType(f.Type, tstypeTag)
+			longType, valid := getInheritedType(f.Type, tstypeTag)
 			if valid {
-				inheritances = append(inheritances, name)
+				mappedTsType, ok := g.conf.TypeMappings[longType]
+				if ok {
+					inheritances = append(inheritances, mappedTsType)
+				} else {
+					// We can't use the fallback type because TypeScript doesn't allow extending "any".
+					inheritances = append(inheritances, longType)
+				}
+
 			}
 		}
 	}
