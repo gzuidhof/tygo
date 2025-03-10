@@ -1,5 +1,7 @@
 # This is a config file that typescriptifies the packages under the example folder.
 # and some other packages.
+type_mappings:
+  time.Duration: "number /* int, ns */"
 
 packages:
   - path: "github.com/gzuidhof/tygo/examples/bookstore"
@@ -56,4 +58,6 @@ packages:
       - "excluded.go"
   - path: "github.com/gzuidhof/tygo/examples/rune"
 
+  - path: "github.com/gzuidhof/tygo/examples/globalconfig"
+  
 

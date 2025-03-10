@@ -64,7 +64,8 @@ type PackageConfig struct {
 }
 
 type Config struct {
-	Packages []*PackageConfig `yaml:"packages"`
+	TypeMappings map[string]string `yaml:"type_mappings"`
+	Packages     []*PackageConfig  `yaml:"packages"`
 }
 
 func (c Config) PackageNames() []string {
@@ -79,6 +80,7 @@ func (c Config) PackageNames() []string {
 func (c Config) PackageConfig(packagePath string) *PackageConfig {
 	for _, pc := range c.Packages {
 		if pc.Path == packagePath {
+			pc.TypeMappings = c.mergeMappings(pc.TypeMappings)
 			pcNormalized, err := pc.Normalize()
 			if err != nil {
 				log.Fatalf("Error in config for package %s: %s", packagePath, err)
@@ -187,4 +189,15 @@ func (pc PackageConfig) Normalize() (PackageConfig, error) {
 	}
 
 	return pc, nil
+}
+
+func (c Config) mergeMappings(pkg map[string]string) map[string]string {
+	mappings := make(map[string]string)
+	for k, v := range c.TypeMappings {
+		mappings[k] = v
+	}
+	for k, v := range pkg {
+		mappings[k] = v
+	}
+	return mappings
 }

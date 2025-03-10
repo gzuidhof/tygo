@@ -138,6 +138,10 @@ err := gen.Generate()
 ## Config
 
 ```yaml
+# You can specify default mappings that will apply to all packages.
+type_mappings:
+  time.Time: "string /* RFC3339 */"
+  
 # You can specify more than one package
 packages:
   # The package path just like you would import it in Go
@@ -151,7 +155,8 @@ packages:
     indent: "    "
 
     # Specify your own custom type translations, useful for custom types, `time.Time` and `null.String`.
-    # Be default unrecognized types will be `any`.
+    # By default unrecognized types will be `any`.
+    # A mapping specified here will override one specified globally.
     type_mappings:
       time.Time: "string"
       my.Type: "SomeType"
