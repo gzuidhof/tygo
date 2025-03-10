@@ -41,6 +41,7 @@ type UserEntry struct {
 	MaybeFieldWithStar *string  `json:"address"`
 	Nickname           string   `json:"nickname,omitempty"`
 	Role               UserRole `json:"role"`
+  CreatedAt          time.Time `json:"created_at,omitzero"`
 
 	Complex    ComplexType `json:"complex"`
 	unexported bool        // Unexported fields are omitted
@@ -85,6 +86,7 @@ export interface UserEntry {
   address?: string;
   nickname?: string;
   role: UserRole;
+  created_at?: string /* RFC3339 */;
   complex: ComplexType;
 }
 export interface ListUsersResponse {
