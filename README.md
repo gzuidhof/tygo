@@ -1,3 +1,5 @@
+This project is a maintained fork of gzuidhof/tygo, originally created by Guus Zuidhof. All core logic and ideas are credited to the original author. This fork exists to provide additional fixes and improvements ahead of upstream merges.
+
 # 🎑 tygo
 
 Tygo is a tool for generating Typescript typings from Golang source files that just works.
@@ -9,7 +11,7 @@ It preserves comments, understands constants and also supports non-struct `type`
 ## Installation
 
 ```shell
-go install github.com/gzuidhof/tygo@latest
+go install github.com/okaris/tygo@latest
 ```
 
 ## Example
@@ -104,7 +106,7 @@ Create a file `tygo.yaml` in which you specify which packages are to be converte
 
 ```yaml
 packages:
-  - path: "github.com/gzuidhof/tygo/examples/bookstore"
+  - path: "github.com/okaris/tygo/examples/bookstore"
     type_mappings:
       time.Time: "string /* RFC3339 */"
       null.String: "null | string"
@@ -127,7 +129,7 @@ The output Typescript file will be next to the Go source files.
 config := &tygo.Config{
   Packages: []*tygo.PackageConfig{
       &tygo.PackageConfig{
-          Path: "github.com/gzuidhof/tygo/examples/bookstore",
+          Path: "github.com/okaris/tygo/examples/bookstore",
       },
   },
 }

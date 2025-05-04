@@ -10,7 +10,7 @@ builds:
       - amd64
       - arm64
     ldflags:
-      - -s -w -X github.com/gzuidhof/tygo/cmd.version={{.Version}} -X github.com/gzuidhof/tygo/cmd.commit={{.Commit}} -X github.com/gzuidhof/tygo/cmd.commitDate={{.CommitDate}}
+      - -s -w -X github.com/okaris/tygo/cmd.version={{.Version}} -X github.com/okaris/tygo/cmd.commit={{.Commit}} -X github.com/okaris/tygo/cmd.commitDate={{.CommitDate}}
 archives:
   - id: tygo
     name_template: >-

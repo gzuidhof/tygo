@@ -3,7 +3,7 @@
 //////////
 // source: any.go
 /*
-Example for https://github.com/gzuidhof/tygo/issues/65
+Example for https://github.com/okaris/tygo/issues/65
 */
 
 export interface AnyStructField<T extends any> {
