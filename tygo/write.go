@@ -313,23 +313,17 @@ func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.F
 				panic(err)
 			}
 
-			jsonTag, err := tags.Get("json")
-			if err == nil {
+			jsonTag, jsonErr := tags.Get("json")
+			yamlTag, yamlErr := tags.Get("yaml")
+
+			if jsonErr == nil && jsonTag.Name != "-" {
 				name = jsonTag.Name
-				if name == "-" {
-					continue
-				}
-
 				optional = jsonTag.HasOption("omitempty") || jsonTag.HasOption("omitzero")
-			}
-			yamlTag, err := tags.Get("yaml")
-			if err == nil {
+			} else if yamlErr == nil && yamlTag.Name != "-" {
 				name = yamlTag.Name
-				if name == "-" {
-					continue
-				}
-
 				optional = yamlTag.HasOption("omitempty")
+			} else {
+				continue
 			}
 
 			tstypeTag, err := tags.Get("tstype")
