@@ -127,7 +127,7 @@ export type SingleSpecific = Single<string>;
 
 # Any field
 
-Example for https://github.com/gzuidhof/tygo/issues/65.
+Example for https://github.com/okaris/tygo/issues/65.
 ```go
 type AnyStructField[T any] struct {
   Value     T

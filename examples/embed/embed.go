@@ -1,6 +1,6 @@
 package embed
 
-import bookapp "github.com/gzuidhof/tygo/examples/bookstore"
+import bookapp "github.com/okaris/tygo/examples/bookstore"
 
 // TokenType Built-in type alias
 type TokenType string
