@@ -5,10 +5,14 @@ import (
 	"strings"
 )
 
+// PreserveDocComments returns true if doc comments should be preserved.
+// These are comments that are not associated with a type or function, but rather
+// with the package or file itself.
 func (g *PackageGenerator) PreserveDocComments() bool {
 	return g.conf.PreserveComments == "default"
 }
 
+// PreserveTypeComments returns true if type comments should be preserved.
 func (g *PackageGenerator) PreserveTypeComments() bool {
 	return g.conf.PreserveComments == "types" || g.conf.PreserveComments == "default"
 }

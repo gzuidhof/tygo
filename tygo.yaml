@@ -18,6 +18,8 @@ packages:
       export type Something = string | number;
   - path: "github.com/gzuidhof/tygo/examples/simple"
     fallback_type: unknown
+    type_mappings:
+      time.Time: "string /* RFC3339 */"
   - path: "github.com/gzuidhof/tygo/examples/inheritance"
     fallback_type: unknown
     frontmatter:

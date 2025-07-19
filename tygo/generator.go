@@ -72,7 +72,7 @@ func (g *Tygo) Generate() error {
 			return nil
 		}
 
-		err = os.WriteFile(outPath, []byte(code), 0664)
+		err = os.WriteFile(outPath, []byte(code), 0o664)
 		if err != nil {
 			return nil
 		}

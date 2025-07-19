@@ -45,6 +45,7 @@ func (g *PackageGenerator) emitVar(s *strings.Builder, dec *ast.GenDecl) {
 	}
 	s.WriteString(v[1:len(v)-1] + "\n")
 }
+
 func (g *PackageGenerator) writeGroupDecl(s *strings.Builder, decl *ast.GenDecl) {
 	// This checks whether the declaration is a group declaration like:
 	// const (
@@ -52,6 +53,16 @@ func (g *PackageGenerator) writeGroupDecl(s *strings.Builder, decl *ast.GenDecl)
 	//    Y = "abc"
 	// )
 	isGroupedDeclaration := len(decl.Specs) > 1
+
+	// Check if decl is exported, if not, we exit early so we don't write its comment.
+	if !isGroupedDeclaration {
+		if ts, ok := decl.Specs[0].(*ast.TypeSpec); ok && !ts.Name.IsExported() {
+			return
+		}
+		if vs, ok := decl.Specs[0].(*ast.ValueSpec); ok && !vs.Names[0].IsExported() {
+			return
+		}
+	}
 
 	if !isGroupedDeclaration && g.PreserveTypeComments() {
 		g.writeCommentGroupIfNotNil(s, decl.Doc, 0)
