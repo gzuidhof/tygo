@@ -110,6 +110,8 @@ type B struct {
   // A comment above the fields separated by a comma
   Foo, Bar, baz string
 }
+
+
 ```
 ```ts
 export interface A {
@@ -126,4 +128,12 @@ export interface B {
    */
   Bar: string;
 }
+```
+
+```go
+const Pi, E = 3.14, 2.71 // A comment on constants separated by a comma
+```
+```ts
+export const Pi = 3.14; // A comment on constants separated by a comma
+export const E = 2.71; // A comment on constants separated by a comma
 ```
