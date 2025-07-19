@@ -12,10 +12,12 @@ import (
 	"github.com/fatih/structtag"
 )
 
-var validJSNameRegexp = regexp.MustCompile(`(?m)^[\pL_][\pL\pN_]*$`)
-var backquoteEscapeRegexp = regexp.MustCompile(`([$\\])`)
-var octalPrefixRegexp = regexp.MustCompile(`^0[0-7]`)
-var unicode8Regexp = regexp.MustCompile(`\\\\|\\U[\da-fA-F]{8}`)
+var (
+	validJSNameRegexp     = regexp.MustCompile(`(?m)^[\pL_][\pL\pN_]*$`)
+	backquoteEscapeRegexp = regexp.MustCompile(`([$\\])`)
+	octalPrefixRegexp     = regexp.MustCompile(`^0[0-7]`)
+	unicode8Regexp        = regexp.MustCompile(`\\\\|\\U[\da-fA-F]{8}`)
+)
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_precedence#table
 var jsNumberOperatorPrecedence = map[token.Token]int{
@@ -292,110 +294,115 @@ func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.F
 		required := false
 		readonly := false
 
-		var fieldName string
+		fieldNames := make([]string, 0, len(f.Names))
 		if len(f.Names) == 0 { // anonymous field
 			if name, valid := getAnonymousFieldName(f.Type); valid {
-				fieldName = name
+				fieldNames = append(fieldNames, name)
 			}
-		}
-		if len(f.Names) != 0 && f.Names[0] != nil && len(f.Names[0].Name) != 0 {
-			fieldName = f.Names[0].Name
-		}
-		if len(fieldName) == 0 || 'A' > fieldName[0] || fieldName[0] > 'Z' {
-			continue
-		}
-
-		var name string
-		var tstype string
-		if f.Tag != nil {
-			tags, err := structtag.Parse(f.Tag.Value[1 : len(f.Tag.Value)-1])
-			if err != nil {
-				panic(err)
-			}
-
-			jsonTag, err := tags.Get("json")
-			if err == nil {
-				name = jsonTag.Name
-				if name == "-" {
+		} else {
+			for _, name := range f.Names {
+				if len(name.Name) == 0 || 'A' > name.Name[0] || name.Name[0] > 'Z' {
 					continue
 				}
-
-				optional = jsonTag.HasOption("omitempty") || jsonTag.HasOption("omitzero")
-			}
-			yamlTag, err := tags.Get("yaml")
-			if err == nil {
-				name = yamlTag.Name
-				if name == "-" {
-					continue
-				}
-
-				optional = yamlTag.HasOption("omitempty")
-			}
-
-			tstypeTag, err := tags.Get("tstype")
-			if err == nil {
-				tstype = tstypeTag.Name
-				if tstype == "-" || tstypeTag.HasOption("extends") {
-					continue
-				}
-				required = tstypeTag.HasOption("required")
-				readonly = tstypeTag.HasOption("readonly")
+				fieldNames = append(fieldNames, name.Name)
 			}
 		}
 
-		if len(name) == 0 {
-			if g.conf.Flavor == "yaml" {
-				name = strings.ToLower(fieldName)
+		for _, fieldName := range fieldNames {
+
+			var name string
+			var tstype string
+			if f.Tag != nil {
+				tags, err := structtag.Parse(f.Tag.Value[1 : len(f.Tag.Value)-1])
+				if err != nil {
+					panic(err)
+				}
+
+				jsonTag, err := tags.Get("json")
+				if err == nil {
+					name = jsonTag.Name
+					if name == "-" {
+						continue
+					}
+
+					optional = jsonTag.HasOption("omitempty") || jsonTag.HasOption("omitzero")
+				}
+				yamlTag, err := tags.Get("yaml")
+				if err == nil {
+					name = yamlTag.Name
+					if name == "-" {
+						continue
+					}
+
+					optional = yamlTag.HasOption("omitempty")
+				}
+
+				tstypeTag, err := tags.Get("tstype")
+				if err == nil {
+					tstype = tstypeTag.Name
+					if tstype == "-" || tstypeTag.HasOption("extends") {
+						continue
+					}
+					required = tstypeTag.HasOption("required")
+					readonly = tstypeTag.HasOption("readonly")
+				}
+			}
+
+			if len(name) == 0 {
+				if g.conf.Flavor == "yaml" {
+					name = strings.ToLower(fieldName)
+				} else {
+					name = fieldName
+				}
+			}
+
+			if g.PreserveTypeComments() {
+				g.writeCommentGroupIfNotNil(s, f.Doc, depth+1)
+			}
+
+			g.writeIndent(s, depth+1)
+			quoted := !validJSName(name)
+			if quoted {
+				s.WriteByte('\'')
+			}
+			if readonly {
+				s.WriteString("readonly ")
+			}
+			s.WriteString(name)
+			if quoted {
+				s.WriteByte('\'')
+			}
+
+			switch t := f.Type.(type) {
+			case *ast.StarExpr:
+				optional = !required
+				f.Type = t.X
+			}
+
+			if optional && g.conf.OptionalType == "undefined" {
+				s.WriteByte('?')
+			}
+
+			s.WriteString(": ")
+
+			if tstype == "" {
+				g.writeType(s, f.Type, nil, depth, false)
+				if optional && g.conf.OptionalType == "null" {
+					s.WriteString(" | null")
+				}
 			} else {
-				name = fieldName
+				s.WriteString(tstype)
 			}
-		}
+			s.WriteByte(';')
 
-		if g.PreserveTypeComments() {
-			g.writeCommentGroupIfNotNil(s, f.Doc, depth+1)
-		}
-
-		g.writeIndent(s, depth+1)
-		quoted := !validJSName(name)
-		if quoted {
-			s.WriteByte('\'')
-		}
-		if readonly {
-			s.WriteString("readonly ")
-		}
-		s.WriteString(name)
-		if quoted {
-			s.WriteByte('\'')
-		}
-
-		switch t := f.Type.(type) {
-		case *ast.StarExpr:
-			optional = !required
-			f.Type = t.X
-		}
-
-		if optional && g.conf.OptionalType == "undefined" {
-			s.WriteByte('?')
-		}
-
-		s.WriteString(": ")
-
-		if tstype == "" {
-			g.writeType(s, f.Type, nil, depth, false)
-			if optional && g.conf.OptionalType == "null" {
-				s.WriteString(" | null")
+			if f.Comment != nil && g.PreserveTypeComments() {
+				// Line comment is present, that means a comment after the field.
+				s.WriteString(" // ")
+				s.WriteString(f.Comment.Text())
+			} else {
+				s.WriteByte('\n')
 			}
-		} else {
-			s.WriteString(tstype)
-		}
-		s.WriteByte(';')
 
-		if f.Comment != nil && g.PreserveTypeComments() {
-			// Line comment is present, that means a comment after the field.
-			s.WriteString(" // ")
-			s.WriteString(f.Comment.Text())
-		} else {
-			s.WriteByte('\n')
 		}
 
 	}

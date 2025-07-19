@@ -78,7 +78,6 @@ func parseMarkdownFixtures(fileContents []byte) ([]MarkdownFixture, error) {
 	}
 
 	return fixtures, nil
-
 }
 
 // Tests all markdown files in `testdata/fixtures/` directory.
