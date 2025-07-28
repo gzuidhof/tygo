@@ -1,4 +1,5 @@
 Basic enum generation with enum_style: "enum"
+
 ```yaml
 enum_style: "enum"
 ```
@@ -14,11 +15,12 @@ const (
 ```ts
 export enum UserRole {
   Default = "viewer",
-  Editor = "editor"
+  Editor = "editor",
 }
 ```
 
 Enum with comments
+
 ```yaml
 enum_style: "enum"
 ```
@@ -42,11 +44,12 @@ export enum Status {
    * Default status for new users
    */
   Active = "active",
-  Inactive = "inactive" // User is temporarily disabled
+  Inactive = "inactive", // User is temporarily disabled
 }
 ```
 
 Numeric enum with iota
+
 ```yaml
 enum_style: "enum"
 ```
@@ -64,11 +67,12 @@ const (
 export enum Priority {
   Low = 0,
   Medium,
-  High
+  High,
 }
 ```
 
 Mixed const block (partial enum)
+
 ```yaml
 enum_style: "enum"
 ```
@@ -85,13 +89,14 @@ const (
 ```ts
 export enum UserRole {
   Admin = "admin",
-  Guest = "guest"
+  Guest = "guest",
 }
 export const MaxRetries = 5;
 export const DefaultTimeout = 30;
 ```
 
 Default behavior (enum_style: "const")
+
 ```yaml
 enum_style: "const"
 ```
@@ -111,6 +116,7 @@ export const UserRoleEditor: UserRole = "editor";
 ```
 
 No enum_style configured (defaults to "const")
+
 ```go
 type UserRole = string
 const (

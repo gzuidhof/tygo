@@ -210,7 +210,7 @@ func (g *PackageGenerator) writeTypeScriptEnum(s *strings.Builder, enumGroup *en
 	// Write enum members
 	memberIndex := 0
 	iotaValue := 0
-	for i, constant := range enumGroup.constants {
+	for _, constant := range enumGroup.constants {
 		// Skip unexported constants
 		if !constant.Names[0].IsExported() {
 			continue
@@ -242,18 +242,7 @@ func (g *PackageGenerator) writeTypeScriptEnum(s *strings.Builder, enumGroup *en
 			s.WriteString(valueString)
 		}
 
-		// Determine if we need a comma (not the last exported member)
-		needsComma := false
-		for j := i + 1; j < len(enumGroup.constants); j++ {
-			if enumGroup.constants[j].Names[0].IsExported() {
-				needsComma = true
-				break
-			}
-		}
-
-		if needsComma {
-			s.WriteString(",")
-		}
+		s.WriteString(",")
 
 		// Write line comment if present
 		if constant.Comment != nil && g.PreserveDocComments() {

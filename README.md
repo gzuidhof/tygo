@@ -107,7 +107,7 @@ export type ComplexType = {
 };
 export enum UserRole {
   Default = "viewer",
-  Editor = "editor" // Line comments are also kept
+  Editor = "editor", // Line comments are also kept
 }
 export interface UserEntry {
   /**
@@ -447,6 +447,7 @@ Tygo can generate native TypeScript enums from Go const groups. When `enum_style
 ### Requirements for Enum Generation
 
 For a const group to be recognized as an enum:
+
 1. It must contain at least 2 exported constants
 2. All constants should share the same type (e.g., `UserRole`)
 3. Constant names should follow a consistent prefix pattern (e.g., `UserRoleDefault`, `UserRoleEditor`)
@@ -454,6 +455,7 @@ For a const group to be recognized as an enum:
 ### Examples
 
 **String Enums:**
+
 ```go
 // Go input
 type Status = string
@@ -469,11 +471,12 @@ const (
 export enum Status {
   Active = "active",
   Inactive = "inactive",
-  Pending = "pending"
+  Pending = "pending",
 }
 ```
 
 **Numeric Enums with iota:**
+
 ```go
 // Go input
 type Priority int
@@ -489,7 +492,7 @@ const (
 export enum Priority {
   Low = 0,
   Medium,
-  High
+  High,
 }
 ```
 
@@ -510,7 +513,7 @@ const (
 // TypeScript output (with enum_style: "enum")
 export enum UserRole {
   Admin = "admin",
-  Guest = "guest"
+  Guest = "guest",
 }
 export const MaxRetries = 5;
 export const DefaultTimeout = 30;
