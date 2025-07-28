@@ -501,6 +501,7 @@ When a const block contains both enum-like constants and other constants, tygo g
 
 ```go
 // Go input
+type UserRole = string
 const (
     UserRoleAdmin UserRole = "admin"
     UserRoleGuest UserRole = "guest"
