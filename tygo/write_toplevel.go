@@ -46,6 +46,229 @@ func (g *PackageGenerator) emitVar(s *strings.Builder, dec *ast.GenDecl) {
 	s.WriteString(v[1:len(v)-1] + "\n")
 }
 
+type enumGroup struct {
+	typeName   string
+	typePrefix string
+	constants  []*ast.ValueSpec
+	doc        *ast.CommentGroup
+}
+
+// detectEnumGroup analyzes a const declaration group to determine if it represents
+// an enum-like pattern that should be converted to a TypeScript enum.
+// Returns the enum group info if detected, nil otherwise.
+func (g *PackageGenerator) detectEnumGroup(decl *ast.GenDecl) *enumGroup {
+	// Only process const declarations with multiple specs
+	if decl.Tok != token.CONST || len(decl.Specs) < 2 {
+		return nil
+	}
+
+	// Only generate enums if configured to do so
+	if g.conf.EnumStyle != "enum" {
+		return nil
+	}
+
+	var candidates []*ast.ValueSpec
+	var commonType string
+	var commonPrefix string
+
+	// First pass: collect all exported constants and analyze their types
+	for _, spec := range decl.Specs {
+		vs, ok := spec.(*ast.ValueSpec)
+		if !ok {
+			continue
+		}
+
+		// Skip unexported constants and blank identifiers
+		for _, name := range vs.Names {
+			if !name.IsExported() || name.Name == "_" {
+				continue
+			}
+
+			// Get the type name
+			var typeName string
+			if vs.Type != nil {
+				if ident, ok := vs.Type.(*ast.Ident); ok {
+					typeName = ident.Name
+				}
+			}
+
+			candidates = append(candidates, vs)
+
+			// For the first candidate, try to establish the pattern
+			if commonType == "" && typeName != "" {
+				commonType = typeName
+				// Extract potential prefix from the constant name
+				if strings.HasPrefix(name.Name, typeName) {
+					commonPrefix = typeName
+				}
+			}
+
+			break // Only process the first name in multi-name declarations
+		}
+	}
+
+	// Need at least 2 candidates
+	if len(candidates) < 2 {
+		return nil
+	}
+
+	// If we couldn't establish a common type from explicit types, try to infer from names
+	if commonType == "" || commonPrefix == "" {
+		commonPrefix = findCommonPrefix(candidates)
+		if commonPrefix == "" {
+			return nil
+		}
+		commonType = commonPrefix
+	}
+
+	// Second pass: validate all candidates match the pattern
+	var validConstants []*ast.ValueSpec
+	for _, vs := range candidates {
+		name := vs.Names[0].Name
+
+		// Check if name matches the prefix pattern
+		if !strings.HasPrefix(name, commonPrefix) {
+			continue
+		}
+
+		// Check type consistency
+		var typeName string
+		if vs.Type != nil {
+			if ident, ok := vs.Type.(*ast.Ident); ok {
+				typeName = ident.Name
+			}
+		}
+
+		// If there's an explicit type, it must match
+		if typeName != "" && typeName != commonType {
+			continue
+		}
+
+		validConstants = append(validConstants, vs)
+	}
+
+	// Need at least 2 valid constants to form an enum
+	if len(validConstants) < 2 {
+		return nil
+	}
+
+	return &enumGroup{
+		typeName:   commonType,
+		typePrefix: commonPrefix,
+		constants:  validConstants,
+		doc:        decl.Doc,
+	}
+}
+
+// findCommonPrefix finds the longest common prefix among constant names
+// that could represent an enum type name
+func findCommonPrefix(constants []*ast.ValueSpec) string {
+	if len(constants) == 0 {
+		return ""
+	}
+
+	firstLabel := constants[0].Names[0].Name
+
+	// Try different prefix lengths, starting with the full name and working backwards
+	for prefixLen := len(firstLabel); prefixLen > 0; prefixLen-- {
+		candidate := firstLabel[:prefixLen]
+
+		// Skip if the candidate doesn't look like a type name (should be capitalized)
+		if len(candidate) == 0 || candidate[0] < 'A' || candidate[0] > 'Z' {
+			continue
+		}
+
+		// Check if all constants start with this candidate
+		allMatch := true
+		for _, vs := range constants[1:] {
+			if !strings.HasPrefix(vs.Names[0].Name, candidate) {
+				allMatch = false
+				break
+			}
+		}
+
+		if allMatch {
+			return candidate
+		}
+	}
+
+	return ""
+}
+
+// writeTypeScriptEnum generates a TypeScript enum declaration from an enumGroup
+func (g *PackageGenerator) writeTypeScriptEnum(s *strings.Builder, enumGroup *enumGroup) {
+	// Write enum comment if present
+	if enumGroup.doc != nil && g.PreserveTypeComments() {
+		g.writeCommentGroup(s, enumGroup.doc, 0)
+	}
+
+	// Write enum declaration
+	s.WriteString("export enum ")
+	s.WriteString(enumGroup.typeName)
+	s.WriteString(" {\n")
+
+	// Write enum members
+	memberIndex := 0
+	iotaValue := 0
+	for i, constant := range enumGroup.constants {
+		// Skip unexported constants
+		if !constant.Names[0].IsExported() {
+			continue
+		}
+
+		// Write member comment if present
+		if constant.Doc != nil && g.PreserveTypeComments() {
+			g.writeCommentGroup(s, constant.Doc, 1)
+		}
+
+		// Write the enum member
+		s.WriteString(g.conf.Indent)
+
+		// Generate the member name by stripping the prefix
+		memberName := strings.TrimPrefix(constant.Names[0].Name, enumGroup.typePrefix)
+		s.WriteString(memberName)
+
+		// Write the value if present
+		if len(constant.Values) > 0 {
+			s.WriteString(" = ")
+			tempSB := &strings.Builder{}
+			g.writeType(tempSB, constant.Values[0], nil, 0, false)
+			valueString := tempSB.String()
+
+			// Handle iota values
+			if isProbablyIotaType(valueString) {
+				valueString = replaceIotaValue(valueString, iotaValue)
+			}
+			s.WriteString(valueString)
+		}
+
+		// Determine if we need a comma (not the last exported member)
+		needsComma := false
+		for j := i + 1; j < len(enumGroup.constants); j++ {
+			if enumGroup.constants[j].Names[0].IsExported() {
+				needsComma = true
+				break
+			}
+		}
+
+		if needsComma {
+			s.WriteString(",")
+		}
+
+		// Write line comment if present
+		if constant.Comment != nil && g.PreserveDocComments() {
+			g.writeSingleLineComment(s, constant.Comment)
+		} else {
+			s.WriteString("\n")
+		}
+
+		memberIndex++
+		iotaValue++
+	}
+
+	s.WriteString("}\n")
+}
+
 func (g *PackageGenerator) writeGroupDecl(s *strings.Builder, decl *ast.GenDecl) {
 	// This checks whether the declaration is a group declaration like:
 	// const (
@@ -62,6 +285,13 @@ func (g *PackageGenerator) writeGroupDecl(s *strings.Builder, decl *ast.GenDecl)
 		if vs, ok := decl.Specs[0].(*ast.ValueSpec); ok && !vs.Names[0].IsExported() {
 			return
 		}
+	}
+
+	// Check if this is an enum group and handle it specially
+	enumGroup := g.detectEnumGroup(decl)
+	if enumGroup != nil {
+		g.writeTypeScriptEnum(s, enumGroup)
+		// Continue to process any non-enum constants in the same block
 	}
 
 	if !isGroupedDeclaration && g.PreserveTypeComments() {
@@ -85,7 +315,19 @@ func (g *PackageGenerator) writeGroupDecl(s *strings.Builder, decl *ast.GenDecl)
 		iotaValue:            -1,
 	}
 
+	// If we generated an enum, track which constants were included so we can skip them
+	enumConstants := make(map[*ast.ValueSpec]bool)
+	if enumGroup != nil {
+		for _, vs := range enumGroup.constants {
+			enumConstants[vs] = true
+		}
+	}
+
 	for _, spec := range decl.Specs {
+		// Skip constants that were already processed as part of an enum
+		if vs, ok := spec.(*ast.ValueSpec); ok && enumConstants[vs] {
+			continue
+		}
 		g.writeSpec(s, spec, group)
 	}
 }
@@ -113,6 +355,11 @@ func (g *PackageGenerator) writeTypeSpec(
 	ts *ast.TypeSpec,
 	group *groupContext,
 ) {
+	// Skip types that have been generated as enums to avoid duplicates
+	if g.generatedEnums[ts.Name.Name] {
+		return
+	}
+
 	if ts.Doc != nil &&
 		g.PreserveTypeComments() { // The spec has its own comment, which overrules the grouped comment.
 		g.writeCommentGroup(s, ts.Doc, 0)
