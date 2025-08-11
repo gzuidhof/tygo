@@ -216,9 +216,10 @@ packages:
     # attaching your types to a generic ORM.
     extends: "SomeType"
 
-    # Enum generation style. Supported values: "const" (default), "enum".
+    # Enum generation style. Supported values: "const" (default), "enum", "union".
     # "const" generates individual export const declarations (traditional behavior).
     # "enum" generates TypeScript enum declarations for Go const groups.
+    # "union" generates TypeScript union type declarations for Go const groups.
     enum_style: "enum"
 ```
 
@@ -440,13 +441,13 @@ export interface ABCD<
 }
 ```
 
-## TypeScript Enum Generation
+## TypeScript Enum and Union Generation
 
-Tygo can generate native TypeScript enums from Go const groups. When `enum_style: "enum"` is configured, tygo detects Go constant groups that follow enum-like patterns and converts them to TypeScript enums.
+Tygo can generate native TypeScript enums or union types from Go const groups. When `enum_style: "enum"` is configured, tygo detects Go constant groups that follow enum-like patterns and converts them to TypeScript enums. When `enum_style: "union"` is configured, the same const groups are converted to TypeScript union types instead.
 
-### Requirements for Enum Generation
+### Requirements for Enum/Union Generation
 
-For a const group to be recognized as an enum:
+For a const group to be recognized as an enum or union:
 
 1. It must contain at least 2 exported constants
 2. All constants should share the same type (e.g., `UserRole`)
@@ -475,6 +476,11 @@ export enum Status {
 }
 ```
 
+```typescript
+// TypeScript output (with enum_style: "union")
+export type Status = "active" | "inactive" | "pending";
+```
+
 **Numeric Enums with iota:**
 
 ```go
@@ -494,6 +500,11 @@ export enum Priority {
   Medium,
   High,
 }
+```
+
+```typescript
+// TypeScript output (with enum_style: "union")
+export type Priority = 0 | 1 | 2;
 ```
 
 **Mixed Const Blocks:**
@@ -516,6 +527,13 @@ export enum UserRole {
   Admin = "admin",
   Guest = "guest",
 }
+export const MaxRetries = 5;
+export const DefaultTimeout = 30;
+```
+
+```typescript
+// TypeScript output (with enum_style: "union")
+export type UserRole = "admin" | "guest";
 export const MaxRetries = 5;
 export const DefaultTimeout = 30;
 ```

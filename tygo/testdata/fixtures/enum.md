@@ -131,3 +131,85 @@ export type UserRole = string;
 export const UserRoleDefault: UserRole = "viewer";
 export const UserRoleEditor: UserRole = "editor";
 ```
+
+Basic enum generation with enum_style: "union"
+
+```yaml
+enum_style: "union"
+```
+
+```go
+type UserRole = string
+const (
+    UserRoleDefault UserRole = "viewer"
+    UserRoleEditor  UserRole = "editor"
+)
+```
+
+```ts
+export type UserRole = "viewer" | "editor";
+```
+
+Union enum with comments
+
+```yaml
+enum_style: "union"
+```
+
+```go
+// User role enumeration
+type Status = string
+const (
+    // Default status for new users
+    StatusActive Status = "active"
+    StatusInactive Status = "inactive" // User is temporarily disabled
+)
+```
+
+```ts
+/**
+ * User role enumeration
+ */
+export type Status = "active" | "inactive";
+```
+
+Numeric union with iota
+
+```yaml
+enum_style: "union"
+```
+
+```go
+type Priority int
+const (
+    PriorityLow Priority = iota
+    PriorityMedium
+    PriorityHigh
+)
+```
+
+```ts
+export type Priority = 0 | 1 | 2;
+```
+
+Mixed const block (partial union)
+
+```yaml
+enum_style: "union"
+```
+
+```go
+type UserRole = string
+const (
+    UserRoleAdmin UserRole = "admin"
+    UserRoleGuest UserRole = "guest"
+    MaxRetries = 5
+    DefaultTimeout = 30
+)
+```
+
+```ts
+export type UserRole = "admin" | "guest";
+export const MaxRetries = 5;
+export const DefaultTimeout = 30;
+```

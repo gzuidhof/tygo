@@ -62,8 +62,8 @@ func (g *PackageGenerator) detectEnumGroup(decl *ast.GenDecl) *enumGroup {
 		return nil
 	}
 
-	// Only generate enums if configured to do so
-	if g.conf.EnumStyle != "enum" {
+	// Only generate enums/unions if configured to do so
+	if g.conf.EnumStyle != "enum" && g.conf.EnumStyle != "union" {
 		return nil
 	}
 
@@ -258,6 +258,75 @@ func (g *PackageGenerator) writeTypeScriptEnum(s *strings.Builder, enumGroup *en
 	s.WriteString("}\n")
 }
 
+// writeTypeScriptUnion generates a TypeScript union type declaration from an enumGroup
+func (g *PackageGenerator) writeTypeScriptUnion(s *strings.Builder, enumGroup *enumGroup) {
+	// Write union type comment if present
+	if enumGroup.doc != nil && g.PreserveTypeComments() {
+		g.writeCommentGroup(s, enumGroup.doc, 0)
+	}
+
+	// Write union type declaration
+	s.WriteString("export type ")
+	s.WriteString(enumGroup.typeName)
+	s.WriteString(" = ")
+
+	// Collect union values
+	var unionValues []string
+	iotaValue := 0
+	var lastRawValueString string
+	var isIotaSequence bool
+
+	for _, constant := range enumGroup.constants {
+		// Skip unexported constants
+		if !constant.Names[0].IsExported() {
+			iotaValue++
+			continue
+		}
+
+		var valueString string
+		// Get the value if present
+		if len(constant.Values) > 0 {
+			tempSB := &strings.Builder{}
+			g.writeType(tempSB, constant.Values[0], nil, 0, false)
+			rawValueString := tempSB.String()
+
+			// Check if this starts an iota sequence
+			if isProbablyIotaType(rawValueString) {
+				isIotaSequence = true
+				valueString = replaceIotaValue(rawValueString, iotaValue)
+			} else {
+				isIotaSequence = false
+				valueString = rawValueString
+			}
+			lastRawValueString = rawValueString
+		} else if lastRawValueString != "" {
+			// If no explicit value but we have a pattern, continue based on sequence type
+			if isIotaSequence {
+				// Continue the iota sequence
+				valueString = replaceIotaValue(lastRawValueString, iotaValue)
+			} else {
+				// For non-iota patterns, reuse the last value
+				valueString = lastRawValueString
+			}
+		}
+
+		if valueString != "" {
+			unionValues = append(unionValues, valueString)
+		}
+		iotaValue++
+	}
+
+	// Write the union values separated by " | "
+	for i, value := range unionValues {
+		if i > 0 {
+			s.WriteString(" | ")
+		}
+		s.WriteString(value)
+	}
+
+	s.WriteString(";\n")
+}
+
 func (g *PackageGenerator) writeGroupDecl(s *strings.Builder, decl *ast.GenDecl) {
 	// This checks whether the declaration is a group declaration like:
 	// const (
@@ -279,8 +348,12 @@ func (g *PackageGenerator) writeGroupDecl(s *strings.Builder, decl *ast.GenDecl)
 	// Check if this is an enum group and handle it specially
 	enumGroup := g.detectEnumGroup(decl)
 	if enumGroup != nil {
-		g.writeTypeScriptEnum(s, enumGroup)
-		// Continue to process any non-enum constants in the same block
+		switch g.conf.EnumStyle {
+		case "enum":
+			g.writeTypeScriptEnum(s, enumGroup)
+		case "union":
+			g.writeTypeScriptUnion(s, enumGroup)
+		}
 	}
 
 	if !isGroupedDeclaration && g.PreserveTypeComments() {
