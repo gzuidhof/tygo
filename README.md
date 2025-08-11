@@ -94,48 +94,6 @@ export interface ListUsersResponse {
 }
 ```
 
-_Alternative Typescript output (with `enum_style: "enum"`)_
-
-```typescript
-/**
- * Comments are kept :)
- */
-export type ComplexType = {
-  [key: string]: {
-    [key: number /* uint16 */]: number /* uint32 */ | undefined;
-  };
-};
-export enum UserRole {
-  Default = "viewer",
-  Editor = "editor", // Line comments are also kept
-}
-export interface UserEntry {
-  /**
-   * Instead of specifying `tstype` we could also declare the typing
-   * for uuid.NullUUID in the config file.
-   */
-  id: string | null;
-  prefs: {
-    [key: string]: {
-      foo: number /* uint32 */;
-      /**
-       * An unknown type without a `tstype` tag or mapping in the config file
-       * becomes `any`
-       */
-      bar: any /* uuid.UUID */;
-    };
-  };
-  address?: string;
-  nickname?: string;
-  role: UserRole;
-  created_at?: string /* RFC3339 */;
-  complex: ComplexType;
-}
-export interface ListUsersResponse {
-  users: UserEntry[];
-}
-```
-
 For a real baptism by fire example, [here is a Gist with output for the Go built-in `net/http` and `time` package](https://gist.github.com/gzuidhof/7e192a2f33d8a4f5bde5b77fb2c5048c).
 
 ## Usage
