@@ -260,21 +260,11 @@ func (g *PackageGenerator) writeTypeScriptEnum(s *strings.Builder, enumGroup *en
 
 // writeTypeScriptUnion generates a TypeScript union type declaration from an enumGroup
 func (g *PackageGenerator) writeTypeScriptUnion(s *strings.Builder, enumGroup *enumGroup) {
-	// Write union type comment if present
-	if enumGroup.doc != nil && g.PreserveTypeComments() {
-		g.writeCommentGroup(s, enumGroup.doc, 0)
-	}
-
-	// Write union type declaration
-	s.WriteString("export type ")
-	s.WriteString(enumGroup.typeName)
-	s.WriteString(" = ")
-
-	// Collect union values
-	var unionValues []string
+	// First write each constant declaration
 	iotaValue := 0
 	var lastRawValueString string
 	var isIotaSequence bool
+	var constNames []string
 
 	for _, constant := range enumGroup.constants {
 		// Skip unexported constants
@@ -282,6 +272,18 @@ func (g *PackageGenerator) writeTypeScriptUnion(s *strings.Builder, enumGroup *e
 			iotaValue++
 			continue
 		}
+
+		constNames = append(constNames, constant.Names[0].Name)
+
+		// Write constant comment if present
+		if constant.Doc != nil && g.PreserveTypeComments() {
+			g.writeCommentGroup(s, constant.Doc, 0)
+		}
+
+		// Write constant declaration without type annotation
+		s.WriteString("export const ")
+		s.WriteString(constant.Names[0].Name)
+		s.WriteString(" = ")
 
 		var valueString string
 		// Get the value if present
@@ -310,18 +312,36 @@ func (g *PackageGenerator) writeTypeScriptUnion(s *strings.Builder, enumGroup *e
 			}
 		}
 
-		if valueString != "" {
-			unionValues = append(unionValues, valueString)
+		s.WriteString(valueString)
+		s.WriteString(";")
+
+		// Write line comment if present
+		if constant.Comment != nil && g.PreserveDocComments() {
+			g.writeSingleLineComment(s, constant.Comment)
+		} else {
+			s.WriteString("\n")
 		}
+
 		iotaValue++
 	}
 
-	// Write the union values separated by " | "
-	for i, value := range unionValues {
+	// Write union type comment if present
+	if enumGroup.doc != nil && g.PreserveTypeComments() {
+		g.writeCommentGroup(s, enumGroup.doc, 0)
+	}
+
+	// Write union type declaration using typeof references
+	s.WriteString("export type ")
+	s.WriteString(enumGroup.typeName)
+	s.WriteString(" = ")
+
+	// Write the union of typeof references
+	for i, name := range constNames {
 		if i > 0 {
 			s.WriteString(" | ")
 		}
-		s.WriteString(value)
+		s.WriteString("typeof ")
+		s.WriteString(name)
 	}
 
 	s.WriteString(";\n")

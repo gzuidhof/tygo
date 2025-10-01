@@ -436,7 +436,10 @@ export enum Status {
 
 ```typescript
 // TypeScript output (with enum_style: "union")
-export type Status = "active" | "inactive" | "pending";
+export const StatusActive = "active";
+export const StatusInactive = "inactive";
+export const StatusPending = "pending";
+export type Status = typeof StatusActive | typeof StatusInactive | typeof StatusPending;
 ```
 
 **Numeric Enums with iota:**
@@ -462,7 +465,10 @@ export enum Priority {
 
 ```typescript
 // TypeScript output (with enum_style: "union")
-export type Priority = 0 | 1 | 2;
+export const PriorityLow = 0;
+export const PriorityMedium = 1;
+export const PriorityHigh = 2;
+export type Priority = typeof PriorityLow | typeof PriorityMedium | typeof PriorityHigh;
 ```
 
 **Mixed Const Blocks:**
@@ -491,7 +497,9 @@ export const DefaultTimeout = 30;
 
 ```typescript
 // TypeScript output (with enum_style: "union")
-export type UserRole = "admin" | "guest";
+export const UserRoleAdmin = "admin";
+export const UserRoleGuest = "guest";
+export type UserRole = typeof UserRoleAdmin | typeof UserRoleGuest;
 export const MaxRetries = 5;
 export const DefaultTimeout = 30;
 ```
