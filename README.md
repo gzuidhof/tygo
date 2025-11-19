@@ -53,7 +53,7 @@ type ListUsersResponse struct {
 }
 ```
 
-_Typescript output_
+_Typescript output (with default `enum_style: "const"`)_
 
 ```typescript
 /**
@@ -141,7 +141,7 @@ err := gen.Generate()
 # You can specify default mappings that will apply to all packages.
 type_mappings:
   time.Time: "string /* RFC3339 */"
-  
+
 # You can specify more than one package
 packages:
   # The package path just like you would import it in Go
@@ -173,6 +173,12 @@ packages:
     # Package that the generates Typescript types should extend. This is useful when
     # attaching your types to a generic ORM.
     extends: "SomeType"
+
+    # Enum generation style. Supported values: "const" (default), "enum", "union".
+    # "const" generates individual export const declarations (traditional behavior).
+    # "enum" generates TypeScript enum declarations for Go const groups.
+    # "union" generates TypeScript union type declarations for Go const groups.
+    enum_style: "enum"
 ```
 
 See also the source file [tygo/config.go](./tygo/config.go).
@@ -207,10 +213,11 @@ You could use the `frontmatter` field in the config to inject `export type Genre
 
 **`tygo:emit` directive**
 
-Another way to generate types that cannot be directly represented in Go is to use a `//tygo:emit` directive to 
+Another way to generate types that cannot be directly represented in Go is to use a `//tygo:emit` directive to
 directly emit literal TS code.
-The directive can be used in two ways. A `tygo:emit` directive on a struct will emit the remainder of the directive 
+The directive can be used in two ways. A `tygo:emit` directive on a struct will emit the remainder of the directive
 text before the struct.
+
 ```golang
 // Golang input
 
@@ -222,7 +229,7 @@ type Book struct {
 ```
 
 ```typescript
-export type Genre = "novel" | "crime" | "fantasy"
+export type Genre = "novel" | "crime" | "fantasy";
 
 export interface Book {
   title: string;
@@ -231,11 +238,12 @@ export interface Book {
 ```
 
 A `//tygo:emit` directive on a string var will emit the contents of the var, useful for multi-line content.
+
 ```golang
 //tygo:emit
 var _ = `export type StructAsTuple=[
-  a:number, 
-  b:number, 
+  a:number,
+  b:number,
   c:string,
 ]
 `
@@ -245,16 +253,11 @@ type CustomMarshalled struct {
 ```
 
 ```typescript
-export type StructAsTuple=[
-  a:number, 
-  b:number, 
-  c:string,
-]
+export type StructAsTuple = [a: number, b: number, c: string];
 
 export interface CustomMarshalled {
   content: StructAsTuple[];
 }
-
 ```
 
 Generating types this way is particularly useful for tuple types, because a comma cannot be used in the `tstype` tag.
@@ -394,6 +397,111 @@ export interface ABCD<
   c: C;
   d: D;
 }
+```
+
+## TypeScript Enum and Union Generation
+
+Tygo can generate native TypeScript enums or union types from Go const groups. When `enum_style: "enum"` is configured, tygo detects Go constant groups that follow enum-like patterns and converts them to TypeScript enums. When `enum_style: "union"` is configured, the same const groups are converted to TypeScript union types instead.
+
+### Requirements for Enum/Union Generation
+
+For a const group to be recognized as an enum or union:
+
+1. It must contain at least 2 exported constants
+2. All constants should share the same type (e.g., `UserRole`)
+3. Constant names should follow a consistent prefix pattern (e.g., `UserRoleDefault`, `UserRoleEditor`)
+
+### Examples
+
+**String Enums:**
+
+```go
+// Go input
+type Status = string
+const (
+    StatusActive   Status = "active"
+    StatusInactive Status = "inactive"
+    StatusPending  Status = "pending"
+)
+```
+
+```typescript
+// TypeScript output (with enum_style: "enum")
+export enum Status {
+  Active = "active",
+  Inactive = "inactive",
+  Pending = "pending",
+}
+```
+
+```typescript
+// TypeScript output (with enum_style: "union")
+export const StatusActive = "active";
+export const StatusInactive = "inactive";
+export const StatusPending = "pending";
+export type Status = typeof StatusActive | typeof StatusInactive | typeof StatusPending;
+```
+
+**Numeric Enums with iota:**
+
+```go
+// Go input
+type Priority int
+const (
+    PriorityLow Priority = iota
+    PriorityMedium
+    PriorityHigh
+)
+```
+
+```typescript
+// TypeScript output (with enum_style: "enum")
+export enum Priority {
+  Low = 0,
+  Medium,
+  High,
+}
+```
+
+```typescript
+// TypeScript output (with enum_style: "union")
+export const PriorityLow = 0;
+export const PriorityMedium = 1;
+export const PriorityHigh = 2;
+export type Priority = typeof PriorityLow | typeof PriorityMedium | typeof PriorityHigh;
+```
+
+**Mixed Const Blocks:**
+When a const block contains both enum-like constants and other constants, tygo generates an enum for the matching constants and individual const declarations for the rest:
+
+```go
+// Go input
+type UserRole = string
+const (
+    UserRoleAdmin UserRole = "admin"
+    UserRoleGuest UserRole = "guest"
+    MaxRetries = 5
+    DefaultTimeout = 30
+)
+```
+
+```typescript
+// TypeScript output (with enum_style: "enum")
+export enum UserRole {
+  Admin = "admin",
+  Guest = "guest",
+}
+export const MaxRetries = 5;
+export const DefaultTimeout = 30;
+```
+
+```typescript
+// TypeScript output (with enum_style: "union")
+export const UserRoleAdmin = "admin";
+export const UserRoleGuest = "guest";
+export type UserRole = typeof UserRoleAdmin | typeof UserRoleGuest;
+export const MaxRetries = 5;
+export const DefaultTimeout = 30;
 ```
 
 ## YAML support

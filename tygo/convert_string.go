@@ -28,8 +28,9 @@ func ConvertGoToTypescript(goCode string, pkgConfig PackageConfig) (string, erro
 	}
 
 	pkgGen := &PackageGenerator{
-		conf: &pkgConfig,
-		pkg:  nil,
+		conf:           &pkgConfig,
+		pkg:            nil,
+		generatedEnums: make(map[string]bool),
 	}
 
 	s := new(strings.Builder)

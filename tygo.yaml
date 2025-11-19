@@ -56,10 +56,8 @@ packages:
   - path: "github.com/gzuidhof/tygo/examples/interface"
   - path: "github.com/gzuidhof/tygo/examples/directive"
   - path: "github.com/gzuidhof/tygo/examples/emit"
-    exclude_files: 
+    exclude_files:
       - "excluded.go"
   - path: "github.com/gzuidhof/tygo/examples/rune"
 
   - path: "github.com/gzuidhof/tygo/examples/globalconfig"
-  
-

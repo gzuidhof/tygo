@@ -10,6 +10,7 @@ import (
 const defaultOutputFilename = "index.ts"
 const defaultFallbackType = "any"
 const defaultPreserveComments = "default"
+const defaultEnumStyle = "const"
 
 type PackageConfig struct {
 	// The package path just like you would import it in Go
@@ -61,6 +62,13 @@ type PackageConfig struct {
 	// Default is "undefined".
 	// Useful for usage with JSON marshalers that output null for optional fields (e.g. gofiber JSON).
 	OptionalType string `yaml:"optional_type"`
+
+	// Set the enum generation style.
+	// Supported values: "const" (default), "enum", "union".
+	// "const" generates individual export const declarations (current behavior).
+	// "enum" generates TypeScript enum declarations.
+	// "union" generates TypeScript union type declarations.
+	EnumStyle string `yaml:"enum_style"`
 }
 
 type Config struct {
@@ -128,6 +136,19 @@ func normalizeOptionalType(optional string) (string, error) {
 	}
 }
 
+func normalizeEnumStyle(enumStyle string) (string, error) {
+	switch enumStyle {
+	case "", "const":
+		return "const", nil
+	case "enum":
+		return "enum", nil
+	case "union":
+		return "union", nil
+	default:
+		return "", fmt.Errorf("unsupported enum_style: %s", enumStyle)
+	}
+}
+
 func (c PackageConfig) IsFileIgnored(pathToFile string) bool {
 	basename := filepath.Base(pathToFile)
 	for _, ef := range c.ExcludeFiles {
@@ -172,6 +193,10 @@ func (pc PackageConfig) Normalize() (PackageConfig, error) {
 		pc.PreserveComments = defaultPreserveComments
 	}
 
+	if pc.EnumStyle == "" {
+		pc.EnumStyle = defaultEnumStyle
+	}
+
 	var err error
 	pc.Flavor, err = normalizeFlavor(pc.Flavor)
 	if err != nil {
@@ -186,6 +211,11 @@ func (pc PackageConfig) Normalize() (PackageConfig, error) {
 	pc.OptionalType, err = normalizeOptionalType(pc.OptionalType)
 	if err != nil {
 		return pc, fmt.Errorf("invalid optional_type config for package %s: %s", pc.Path, err)
+	}
+
+	pc.EnumStyle, err = normalizeEnumStyle(pc.EnumStyle)
+	if err != nil {
+		return pc, fmt.Errorf("invalid enum_style config for package %s: %s", pc.Path, err)
 	}
 
 	return pc, nil
