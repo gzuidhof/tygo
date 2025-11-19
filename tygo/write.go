@@ -46,7 +46,7 @@ func getIdent(s string) string {
 		"uint", "uint8", "uint16", "uint32", "uint64",
 		"float32", "float64",
 		"complex64", "complex128",
-		"rune":
+		"rune", "byte":
 		return "number /* " + s + " */"
 	}
 	return s
@@ -77,8 +77,8 @@ func (g *PackageGenerator) writeType(
 			s.WriteByte(')')
 		}
 	case *ast.ArrayType:
-		if v, ok := t.Elt.(*ast.Ident); ok && v.String() == "byte" {
-			s.WriteString("string")
+		if v, ok := t.Elt.(*ast.Ident); ok && (v.String() == "byte" || v.String() == "uint8") {
+			s.WriteString("string /* []" + v.String() + " */")
 			break
 		}
 		g.writeType(s, t.Elt, t, depth, true)
