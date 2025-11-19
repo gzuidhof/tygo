@@ -65,7 +65,6 @@ func (g *PackageGenerator) writeType(
 	depth int,
 	optionalParens bool,
 ) {
-	// log.Println("writeType:", reflect.TypeOf(t), t)
 	switch t := t.(type) {
 	case *ast.StarExpr:
 		if optionalParens {
@@ -89,7 +88,12 @@ func (g *PackageGenerator) writeType(
 		g.writeIndent(s, depth+1)
 		s.WriteByte('}')
 	case *ast.Ident:
-		if t.String() == "any" {
+		// e.g. `DurationString` type alias could be replaced with an `id.DurationString` type mapping
+		longType := fmt.Sprintf("id_%s", t.String())
+		mappedTsType, ok := g.conf.TypeMappings[longType]
+		if ok {
+			s.WriteString(mappedTsType)
+		} else if t.String() == "any" {
 			s.WriteString(getIdent(g.conf.FallbackType))
 		} else {
 			s.WriteString(getIdent(t.String()))
