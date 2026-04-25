@@ -4,6 +4,8 @@ import (
 	"go/ast"
 	"go/token"
 	"strings"
+
+	"github.com/fatih/structtag"
 )
 
 // preProcessEnums scans the file for const declarations that will be converted to enums
@@ -75,4 +77,73 @@ func (g *PackageGenerator) Generate() (string, error) {
 	}
 
 	return s.String(), nil
+}
+
+// GetFieldTagInfo returns cached or freshly parsed tag info for a field
+func (g *PackageGenerator) GetFieldTagInfo(f *ast.Field) *FieldTagInfo {
+	if info := g.tagCache.Get(f); info != nil {
+		return info
+	}
+
+	info := &FieldTagInfo{
+		isEmbedded: isAnonymousField(f),
+	}
+
+	if f.Tag != nil {
+		tags, err := structtag.Parse(f.Tag.Value[1 : len(f.Tag.Value)-1])
+		if err != nil {
+			panic(err)
+		}
+
+		jsonTag, err := tags.Get("json")
+		if err == nil {
+			info.jsonTag = jsonTag
+			info.name = jsonTag.Name
+			if jsonTag.Name == "-" {
+				info.skip = true
+			}
+			info.optional = jsonTag.HasOption("omitempty") || jsonTag.HasOption("omitzero")
+		}
+
+		yamlTag, err := tags.Get("yaml")
+		if err == nil {
+			info.yamlTag = yamlTag
+			info.name = yamlTag.Name
+			if yamlTag.Name == "-" {
+				info.skip = true
+			}
+			info.optional = yamlTag.HasOption("omitempty")
+		}
+
+		tstypeTag, err := tags.Get("tstype")
+		if err == nil {
+			info.tstypeTag = tstypeTag
+			if tstypeTag.Name == "-" {
+				info.skip = true
+			}
+			info.required = tstypeTag.HasOption("required")
+			info.readonly = tstypeTag.HasOption("readonly")
+			if tstypeTag.HasOption("extends") {
+				info.isExtend = true
+			}
+		}
+	}
+
+	// Apply default behavior for embedded/anonymous fields based on configuration
+	if info.isEmbedded && !info.skip && g.conf.EmbeddedFieldBehavior != "" {
+		// Parse the embedded field behavior as comma-separated options
+		options := strings.Split(g.conf.EmbeddedFieldBehavior, ",")
+		for _, opt := range options {
+			opt = strings.TrimSpace(opt)
+			switch opt {
+			case "extends":
+				info.isExtend = true
+			case "required":
+				info.required = true
+			}
+		}
+	}
+
+	g.tagCache.Set(f, info)
+	return info
 }

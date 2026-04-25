@@ -31,6 +31,7 @@ func ConvertGoToTypescript(goCode string, pkgConfig PackageConfig) (string, erro
 		conf:           &pkgConfig,
 		pkg:            nil,
 		generatedEnums: make(map[string]bool),
+		tagCache:       NewTagCache(),
 	}
 
 	s := new(strings.Builder)
