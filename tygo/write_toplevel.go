@@ -5,8 +5,6 @@ import (
 	"go/ast"
 	"go/token"
 	"strings"
-
-	"github.com/fatih/structtag"
 )
 
 type groupContext struct {
@@ -505,18 +503,9 @@ func (g *PackageGenerator) writeTypeSpec(
 func (g *PackageGenerator) writeTypeInheritanceSpec(s *strings.Builder, fields []*ast.Field) {
 	inheritances := make([]string, 0)
 	for _, f := range fields {
-		if f.Type != nil && f.Tag != nil {
-			tags, err := structtag.Parse(f.Tag.Value[1 : len(f.Tag.Value)-1])
-			if err != nil {
-				panic(err)
-			}
-
-			tstypeTag, err := tags.Get("tstype")
-			if err != nil || !tstypeTag.HasOption("extends") {
-				continue
-			}
-
-			longType, valid := getInheritedType(f.Type, tstypeTag)
+		tagInfo := g.GetFieldTagInfo(f)
+		if tagInfo.isExtend {
+			longType, valid := getInheritedType(f.Type, tagInfo)
 			if valid {
 				mappedTsType, ok := g.conf.TypeMappings[longType]
 				if ok {
@@ -606,7 +595,7 @@ func (g *PackageGenerator) writeValueSpec(
 	}
 }
 
-func getInheritedType(f ast.Expr, tag *structtag.Tag) (name string, valid bool) {
+func getInheritedType(f ast.Expr, tagInfo *FieldTagInfo) (name string, valid bool) {
 	switch ft := f.(type) {
 	case *ast.Ident:
 		if ft.Obj != nil && ft.Obj.Decl != nil {
@@ -622,13 +611,13 @@ func getInheritedType(f ast.Expr, tag *structtag.Tag) (name string, valid bool) 
 			name = ft.Name
 		}
 	case *ast.IndexExpr:
-		name, valid = getInheritedType(ft.X, tag)
+		name, valid = getInheritedType(ft.X, tagInfo)
 		if valid {
 			generic := getIdent(ft.Index.(*ast.Ident).Name)
 			name += fmt.Sprintf("<%s>", generic)
 		}
 	case *ast.IndexListExpr:
-		name, valid = getInheritedType(ft.X, tag)
+		name, valid = getInheritedType(ft.X, tagInfo)
 		if valid {
 			generic := ""
 			for _, index := range ft.Indices {
@@ -640,10 +629,10 @@ func getInheritedType(f ast.Expr, tag *structtag.Tag) (name string, valid bool) 
 		valid = ft.Sel.IsExported()
 		name = fmt.Sprintf("%s.%s", ft.X, ft.Sel)
 	case *ast.StarExpr:
-		name, valid = getInheritedType(ft.X, tag)
+		name, valid = getInheritedType(ft.X, tagInfo)
 		if valid {
 			// If the type is not required, mark as optional inheritance
-			if !tag.HasOption("required") {
+			if !tagInfo.required {
 				name = fmt.Sprintf("Partial<%s>", name)
 			}
 		}

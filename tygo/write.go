@@ -8,8 +8,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/fatih/structtag"
 )
 
 var (
@@ -289,10 +287,12 @@ func (g *PackageGenerator) writeInterfaceFields(
 
 func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.Field, depth int) {
 	for _, f := range fields {
-		// fmt.Println(f.Type)
-		optional := false
-		required := false
-		readonly := false
+		tagInfo := g.GetFieldTagInfo(f)
+
+		// Skip fields marked as extends (handled in writeTypeInheritanceSpec)
+		if tagInfo.isExtend {
+			continue
+		}
 
 		fieldNames := make([]string, 0, len(f.Names))
 		if len(f.Names) == 0 { // anonymous field
@@ -309,43 +309,15 @@ func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.F
 		}
 
 		for _, fieldName := range fieldNames {
+			// Skip fields marked as skip
+			if tagInfo.skip {
+				continue
+			}
 
-			var name string
+			name := tagInfo.name
 			var tstype string
-			if f.Tag != nil {
-				tags, err := structtag.Parse(f.Tag.Value[1 : len(f.Tag.Value)-1])
-				if err != nil {
-					panic(err)
-				}
-
-				jsonTag, err := tags.Get("json")
-				if err == nil {
-					name = jsonTag.Name
-					if name == "-" {
-						continue
-					}
-
-					optional = jsonTag.HasOption("omitempty") || jsonTag.HasOption("omitzero")
-				}
-				yamlTag, err := tags.Get("yaml")
-				if err == nil {
-					name = yamlTag.Name
-					if name == "-" {
-						continue
-					}
-
-					optional = yamlTag.HasOption("omitempty")
-				}
-
-				tstypeTag, err := tags.Get("tstype")
-				if err == nil {
-					tstype = tstypeTag.Name
-					if tstype == "-" || tstypeTag.HasOption("extends") {
-						continue
-					}
-					required = tstypeTag.HasOption("required")
-					readonly = tstypeTag.HasOption("readonly")
-				}
+			if tagInfo.tstypeTag != nil {
+				tstype = tagInfo.tstypeTag.Name
 			}
 
 			if len(name) == 0 {
@@ -365,7 +337,7 @@ func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.F
 			if quoted {
 				s.WriteByte('\'')
 			}
-			if readonly {
+			if tagInfo.readonly {
 				s.WriteString("readonly ")
 			}
 			s.WriteString(name)
@@ -373,6 +345,8 @@ func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.F
 				s.WriteByte('\'')
 			}
 
+			optional := tagInfo.optional
+			required := tagInfo.required
 			switch t := f.Type.(type) {
 			case *ast.StarExpr:
 				optional = !required

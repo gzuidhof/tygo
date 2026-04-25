@@ -69,6 +69,13 @@ type PackageConfig struct {
 	// "enum" generates TypeScript enum declarations.
 	// "union" generates TypeScript union type declarations.
 	EnumStyle string `yaml:"enum_style"`
+
+	// Default behavior for embedded/anonymous fields.
+	// Uses tag-like syntax, e.g., "extends,required".
+	// Empty string "" treats embedded fields as regular fields (default).
+	// "extends" treats embedded fields as extends (optional, wrapped in Partial<>).
+	// "extends,required" treats embedded fields as extends and required.
+	EmbeddedFieldBehavior string `yaml:"embedded_field_behavior"`
 }
 
 type Config struct {
@@ -149,6 +156,25 @@ func normalizeEnumStyle(enumStyle string) (string, error) {
 	}
 }
 
+func normalizeEmbeddedFieldBehavior(behavior string) (string, error) {
+	if behavior == "" {
+		return "", nil
+	}
+
+	for _, part := range strings.Split(behavior, ",") {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+
+		if part != "extends" && part != "required" {
+			return "", fmt.Errorf("invalid embedded_field_behavior option: %s (valid options: extends, required)", part)
+		}
+	}
+
+	return behavior, nil
+}
+
 func (c PackageConfig) IsFileIgnored(pathToFile string) bool {
 	basename := filepath.Base(pathToFile)
 	for _, ef := range c.ExcludeFiles {
@@ -216,6 +242,11 @@ func (pc PackageConfig) Normalize() (PackageConfig, error) {
 	pc.EnumStyle, err = normalizeEnumStyle(pc.EnumStyle)
 	if err != nil {
 		return pc, fmt.Errorf("invalid enum_style config for package %s: %s", pc.Path, err)
+	}
+
+	pc.EmbeddedFieldBehavior, err = normalizeEmbeddedFieldBehavior(pc.EmbeddedFieldBehavior)
+	if err != nil {
+		return pc, fmt.Errorf("invalid embedded_field_behavior config for package %s: %s", pc.Path, err)
 	}
 
 	return pc, nil

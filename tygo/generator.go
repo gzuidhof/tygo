@@ -18,10 +18,11 @@ type Tygo struct {
 
 // Responsible for generating the code for an input package
 type PackageGenerator struct {
-	conf          *PackageConfig
-	pkg           *packages.Package
-	GoFiles       []string
+	conf           *PackageConfig
+	pkg            *packages.Package
+	GoFiles        []string
 	generatedEnums map[string]bool // Track types that have been generated as enums
+	tagCache       *TagCache       // Cache for parsed tag information
 }
 
 func New(config *Config) *Tygo {
@@ -61,6 +62,7 @@ func (g *Tygo) Generate() error {
 			GoFiles:        pkg.GoFiles,
 			pkg:            pkg,
 			generatedEnums: make(map[string]bool),
+			tagCache:       NewTagCache(),
 		}
 		g.packageGenerators[pkg.PkgPath] = pkgGen
 		code, err := pkgGen.Generate()
