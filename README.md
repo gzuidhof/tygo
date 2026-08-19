@@ -179,9 +179,49 @@ packages:
     # "enum" generates TypeScript enum declarations for Go const groups.
     # "union" generates TypeScript union type declarations for Go const groups.
     enum_style: "enum"
+
+    # Only emit struct fields that carry at least one of these struct tags.
+    # Fields without any of the listed tags are omitted. When empty (default)
+    # every field is emitted.
+    match_tags:
+      - "json"
+
+    # Drop interfaces that would be generated without any fields, for example
+    # after filtering with match_tags. Defaults to false.
+    exclude_empty_structs: true
 ```
 
 See also the source file [tygo/config.go](./tygo/config.go).
+
+## Filtering fields and structs
+
+Sometimes only part of a package should end up in the TypeScript output. Rather
+than splitting types across files and listing them in `exclude_files`, you can
+filter directly on struct tags.
+
+With `match_tags` set, only struct fields that carry at least one of the listed
+tags are emitted:
+
+```golang
+// Golang input (with match_tags: ["json"])
+type User struct {
+	Username string `json:"username"`
+	Password string
+}
+```
+
+```typescript
+// Typescript output
+export interface User {
+  username: string;
+}
+```
+
+Filtering can leave a struct without any fields. Setting `exclude_empty_structs:
+true` omits those interfaces entirely, which is handy when a package mixes types
+meant for the API with internal ones that carry no serialization tags. Structs
+that extend another type through a `tstype:",extends"` tag are kept even when
+they have no fields of their own.
 
 ## Type hints through tagging
 

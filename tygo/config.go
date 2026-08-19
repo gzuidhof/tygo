@@ -69,6 +69,20 @@ type PackageConfig struct {
 	// "enum" generates TypeScript enum declarations.
 	// "union" generates TypeScript union type declarations.
 	EnumStyle string `yaml:"enum_style"`
+
+	// MatchTags, when non-empty, restricts the generated struct fields to those
+	// that carry at least one of the listed struct tags (for example "json").
+	// Fields without any of these tags are omitted from the output.
+	// By default (empty) all fields are included.
+	MatchTags []string `yaml:"match_tags"`
+
+	// ExcludeEmptyStructs, when true, omits interfaces that would be generated
+	// with no fields. This is mostly useful together with MatchTags, where a
+	// struct can end up without any fields after filtering.
+	// Structs that extend another type through a `tstype:",extends"` tag are
+	// kept even when they have no fields of their own.
+	// By default (false) empty interfaces are emitted.
+	ExcludeEmptyStructs bool `yaml:"exclude_empty_structs"`
 }
 
 type Config struct {
