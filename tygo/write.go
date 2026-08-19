@@ -287,9 +287,30 @@ func (g *PackageGenerator) writeInterfaceFields(
 	}
 }
 
+// fieldMatchesTags reports whether f carries at least one of the struct tags
+// listed in matchTags. It is used to implement the `match_tags` config option.
+func fieldMatchesTags(f *ast.Field, matchTags []string) bool {
+	if f.Tag == nil {
+		return false
+	}
+	tags, err := structtag.Parse(f.Tag.Value[1 : len(f.Tag.Value)-1])
+	if err != nil {
+		panic(err)
+	}
+	for _, name := range matchTags {
+		if _, err := tags.Get(name); err == nil {
+			return true
+		}
+	}
+	return false
+}
+
 func (g *PackageGenerator) writeStructFields(s *strings.Builder, fields []*ast.Field, depth int) {
 	for _, f := range fields {
 		// fmt.Println(f.Type)
+		if len(g.conf.MatchTags) > 0 && !fieldMatchesTags(f, g.conf.MatchTags) {
+			continue
+		}
 		optional := false
 		required := false
 		readonly := false

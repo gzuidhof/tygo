@@ -442,6 +442,25 @@ func (g *PackageGenerator) writeTypeSpec(
 		return
 	}
 
+	st, isStruct := ts.Type.(*ast.StructType)
+
+	// Render the struct body up front so that, when exclude_empty_structs is
+	// enabled, we can drop interfaces that would end up with no fields (for
+	// example after filtering with match_tags). Structs that extend another
+	// type are kept even without fields of their own.
+	var structInheritance, structBody string
+	if isStruct {
+		structInheritance = g.structInheritanceClause(st.Fields.List)
+
+		fieldsSB := new(strings.Builder)
+		g.writeStructFields(fieldsSB, st.Fields.List, 0)
+		structBody = fieldsSB.String()
+
+		if g.conf.ExcludeEmptyStructs && structBody == "" && structInheritance == "" {
+			return
+		}
+	}
+
 	if ts.Doc != nil &&
 		g.PreserveTypeComments() { // The spec has its own comment, which overrules the grouped comment.
 		g.writeCommentGroup(s, ts.Doc, 0)
@@ -449,7 +468,6 @@ func (g *PackageGenerator) writeTypeSpec(
 		g.writeCommentGroupIfNotNil(s, group.doc, 0)
 	}
 
-	st, isStruct := ts.Type.(*ast.StructType)
 	if isStruct {
 		s.WriteString("export interface ")
 		s.WriteString(ts.Name.Name)
@@ -462,9 +480,9 @@ func (g *PackageGenerator) writeTypeSpec(
 			g.writeTypeParamsFields(s, ts.TypeParams.List)
 		}
 
-		g.writeTypeInheritanceSpec(s, st.Fields.List)
+		s.WriteString(structInheritance)
 		s.WriteString(" {\n")
-		g.writeStructFields(s, st.Fields.List, 0)
+		s.WriteString(structBody)
 		s.WriteString("}")
 	}
 
@@ -498,11 +516,13 @@ func (g *PackageGenerator) writeTypeSpec(
 	}
 }
 
-// Writing of type inheritance specs, which are expressions like
+// structInheritanceClause returns the TypeScript `extends` clause for a struct,
+// derived from fields tagged with `tstype:",extends"`. It returns an empty
+// string when the struct does not extend any other type. Examples:
 // `type X struct {  }`
 // `type Y struct { X `tstype:",extends"` }`
 // `export interface Y extends X { }`
-func (g *PackageGenerator) writeTypeInheritanceSpec(s *strings.Builder, fields []*ast.Field) {
+func (g *PackageGenerator) structInheritanceClause(fields []*ast.Field) string {
 	inheritances := make([]string, 0)
 	for _, f := range fields {
 		if f.Type != nil && f.Tag != nil {
@@ -529,10 +549,10 @@ func (g *PackageGenerator) writeTypeInheritanceSpec(s *strings.Builder, fields [
 			}
 		}
 	}
-	if len(inheritances) > 0 {
-		s.WriteString(" extends ")
-		s.WriteString(strings.Join(inheritances, ", "))
+	if len(inheritances) == 0 {
+		return ""
 	}
+	return " extends " + strings.Join(inheritances, ", ")
 }
 
 // Writing of value specs, which are exported const expressions like
