@@ -142,6 +142,12 @@ err := gen.Generate()
 type_mappings:
   time.Time: "string /* RFC3339 */"
 
+# Optionally format every generated output using your project's formatter.
+# Tygo appends the generated file paths to the configured arguments.
+formatter:
+  command: "pnpm"
+  args: ["exec", "prettier", "--write"]
+
 # You can specify more than one package
 packages:
   # The package path just like you would import it in Go
@@ -180,6 +186,11 @@ packages:
     # "union" generates TypeScript union type declarations for Go const groups.
     enum_style: "enum"
 ```
+
+The formatter runs once after all generated files have been written. It must accept file paths as trailing
+arguments and format those files in place. Tygo does not install the formatter, so the configured command must be
+available in the environment. The command is executed directly without a shell, and a non-zero exit status makes
+`tygo generate` fail.
 
 See also the source file [tygo/config.go](./tygo/config.go).
 

@@ -71,9 +71,17 @@ type PackageConfig struct {
 	EnumStyle string `yaml:"enum_style"`
 }
 
+// FormatterConfig describes an optional command that formats generated files.
+// Tygo appends all generated output paths to Args before running Command.
+type FormatterConfig struct {
+	Command string   `yaml:"command"`
+	Args    []string `yaml:"args"`
+}
+
 type Config struct {
 	TypeMappings map[string]string `yaml:"type_mappings"`
 	Packages     []*PackageConfig  `yaml:"packages"`
+	Formatter    *FormatterConfig  `yaml:"formatter"`
 }
 
 func (c Config) PackageNames() []string {

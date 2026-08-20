@@ -18,9 +18,9 @@ type Tygo struct {
 
 // Responsible for generating the code for an input package
 type PackageGenerator struct {
-	conf          *PackageConfig
-	pkg           *packages.Package
-	GoFiles       []string
+	conf           *PackageConfig
+	pkg            *packages.Package
+	GoFiles        []string
 	generatedEnums map[string]bool // Track types that have been generated as enums
 }
 
@@ -45,6 +45,7 @@ func (g *Tygo) Generate() error {
 		return err
 	}
 
+	outputPaths := make([]string, 0, len(pkgs))
 	for i, pkg := range pkgs {
 		if len(pkg.Errors) > 0 {
 			return fmt.Errorf("%+v", pkg.Errors)
@@ -78,6 +79,7 @@ func (g *Tygo) Generate() error {
 		if err != nil {
 			return nil
 		}
+		outputPaths = append(outputPaths, outPath)
 	}
-	return nil
+	return runFormatter(g.conf.Formatter, outputPaths)
 }
