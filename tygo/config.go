@@ -64,10 +64,12 @@ type PackageConfig struct {
 	OptionalType string `yaml:"optional_type"`
 
 	// Set the enum generation style.
-	// Supported values: "const" (default), "enum", "union".
+	// Supported values: "const" (default), "enum", "union", "literal_union".
 	// "const" generates individual export const declarations (current behavior).
-	// "enum" generates TypeScript enum declarations.
-	// "union" generates TypeScript union type declarations.
+  // "enum" generates TypeScript enum declarations.
+  // "union" generates constants and a TypeScript union of their types.
+  // "literal_union" generates TypeScript literal union type declarations without constants
+	// (not recommended for numeric consts).
 	EnumStyle string `yaml:"enum_style"`
 }
 
@@ -144,6 +146,8 @@ func normalizeEnumStyle(enumStyle string) (string, error) {
 		return "enum", nil
 	case "union":
 		return "union", nil
+	case "literal_union":
+		return "literal_union", nil
 	default:
 		return "", fmt.Errorf("unsupported enum_style: %s", enumStyle)
 	}

@@ -63,7 +63,7 @@ func (g *PackageGenerator) detectEnumGroup(decl *ast.GenDecl) *enumGroup {
 	}
 
 	// Only generate enums/unions if configured to do so
-	if g.conf.EnumStyle != "enum" && g.conf.EnumStyle != "union" {
+	if g.conf.EnumStyle != "enum" && g.conf.EnumStyle != "union" && g.conf.EnumStyle != "literal_union" {
 		return nil
 	}
 
@@ -258,32 +258,27 @@ func (g *PackageGenerator) writeTypeScriptEnum(s *strings.Builder, enumGroup *en
 	s.WriteString("}\n")
 }
 
-// writeTypeScriptUnion generates a TypeScript union type declaration from an enumGroup
-func (g *PackageGenerator) writeTypeScriptUnion(s *strings.Builder, enumGroup *enumGroup) {
-	// First write each constant declaration
+// enumValue pairs an enum constant with its resolved TypeScript value.
+type enumValue struct {
+	constant *ast.ValueSpec
+	name     string
+	value    string
+}
+
+// resolveEnumValues resolves implicit values and iota expressions for exported enum constants.
+func (g *PackageGenerator) resolveEnumValues(enumGroup *enumGroup) []enumValue {
 	iotaValue := 0
 	var lastRawValueString string
 	var isIotaSequence bool
-	var constNames []string
+	var values []enumValue
 
+	// Find the resolved values for each exported constant in the enum group
 	for _, constant := range enumGroup.constants {
 		// Skip unexported constants
 		if !constant.Names[0].IsExported() {
 			iotaValue++
 			continue
 		}
-
-		constNames = append(constNames, constant.Names[0].Name)
-
-		// Write constant comment if present
-		if constant.Doc != nil && g.PreserveTypeComments() {
-			g.writeCommentGroup(s, constant.Doc, 0)
-		}
-
-		// Write constant declaration without type annotation
-		s.WriteString("export const ")
-		s.WriteString(constant.Names[0].Name)
-		s.WriteString(" = ")
 
 		var valueString string
 		// Get the value if present
@@ -312,17 +307,43 @@ func (g *PackageGenerator) writeTypeScriptUnion(s *strings.Builder, enumGroup *e
 			}
 		}
 
-		s.WriteString(valueString)
+		values = append(values, enumValue{
+			constant: constant,
+			name:     constant.Names[0].Name,
+			value:    valueString,
+		})
+		iotaValue++
+	}
+
+	return values
+}
+
+// writeTypeScriptUnion generates a TypeScript union type declaration from an enumGroup
+func (g *PackageGenerator) writeTypeScriptUnion(s *strings.Builder, enumGroup *enumGroup) {
+	// First write each constant declaration
+	var constNames []string
+
+	for _, enumValue := range g.resolveEnumValues(enumGroup) {
+		constNames = append(constNames, enumValue.name)
+
+		// Write constant comment if present
+		if enumValue.constant.Doc != nil && g.PreserveTypeComments() {
+			g.writeCommentGroup(s, enumValue.constant.Doc, 0)
+		}
+
+		// Write constant declaration without type annotation
+		s.WriteString("export const ")
+		s.WriteString(enumValue.name)
+		s.WriteString(" = ")
+		s.WriteString(enumValue.value)
 		s.WriteString(";")
 
 		// Write line comment if present
-		if constant.Comment != nil && g.PreserveDocComments() {
-			g.writeSingleLineComment(s, constant.Comment)
+		if enumValue.constant.Comment != nil && g.PreserveDocComments() {
+			g.writeSingleLineComment(s, enumValue.constant.Comment)
 		} else {
 			s.WriteString("\n")
 		}
-
-		iotaValue++
 	}
 
 	// Write union type comment if present
@@ -344,6 +365,27 @@ func (g *PackageGenerator) writeTypeScriptUnion(s *strings.Builder, enumGroup *e
 		s.WriteString(name)
 	}
 
+	s.WriteString(";\n")
+}
+
+// writeTypeScriptLiteralUnion generates a TypeScript literal union type declaration from an enumGroup
+func (g *PackageGenerator) writeTypeScriptLiteralUnion(s *strings.Builder, enumGroup *enumGroup) {
+	if enumGroup.doc != nil && g.PreserveTypeComments() {
+		g.writeCommentGroup(s, enumGroup.doc, 0)
+	}
+
+	s.WriteString("export type ")
+	s.WriteString(enumGroup.typeName)
+	s.WriteString(" = ")
+
+	var values []string
+	for _, enumValue := range g.resolveEnumValues(enumGroup) {
+		if enumValue.value != "" {
+			values = append(values, enumValue.value)
+		}
+	}
+
+	s.WriteString(strings.Join(values, " | "))
 	s.WriteString(";\n")
 }
 
@@ -373,6 +415,8 @@ func (g *PackageGenerator) writeGroupDecl(s *strings.Builder, decl *ast.GenDecl)
 			g.writeTypeScriptEnum(s, enumGroup)
 		case "union":
 			g.writeTypeScriptUnion(s, enumGroup)
+		case "literal_union":
+			g.writeTypeScriptLiteralUnion(s, enumGroup)
 		}
 	}
 

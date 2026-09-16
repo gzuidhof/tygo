@@ -174,10 +174,13 @@ packages:
     # attaching your types to a generic ORM.
     extends: "SomeType"
 
-    # Enum generation style. Supported values: "const" (default), "enum", "union".
+    # Enum generation style for Go const groups.
+    # Supported values: "const" (default), "enum", "union", "literal_union".
     # "const" generates individual export const declarations (traditional behavior).
-    # "enum" generates TypeScript enum declarations for Go const groups.
-    # "union" generates TypeScript union type declarations for Go const groups.
+    # "enum" generates TypeScript enum declarations.
+    # "union" generates constants and a TypeScript union of their types.
+    # "literal_union" generates TypeScript literal union type declarations without constants
+    # (not recommended for numeric consts).
     enum_style: "enum"
 ```
 
@@ -401,7 +404,7 @@ export interface ABCD<
 
 ## TypeScript Enum and Union Generation
 
-Tygo can generate native TypeScript enums or union types from Go const groups. When `enum_style: "enum"` is configured, tygo detects Go constant groups that follow enum-like patterns and converts them to TypeScript enums. When `enum_style: "union"` is configured, the same const groups are converted to TypeScript union types instead.
+Tygo can generate native TypeScript enums or union types from Go const groups. When `enum_style: "enum"` is configured, tygo detects Go constant groups that follow enum-like patterns and converts them to TypeScript enums. The `union` style preserves the constants and generates a union of their types, while `literal_union` generates a union of the values without emitting the constants.
 
 ### Requirements for Enum/Union Generation
 
@@ -442,6 +445,11 @@ export const StatusPending = "pending";
 export type Status = typeof StatusActive | typeof StatusInactive | typeof StatusPending;
 ```
 
+```typescript
+// TypeScript output (with enum_style: "literal_union")
+export type Status = "active" | "inactive" | "pending";
+```
+
 **Numeric Enums with iota:**
 
 ```go
@@ -469,6 +477,11 @@ export const PriorityLow = 0;
 export const PriorityMedium = 1;
 export const PriorityHigh = 2;
 export type Priority = typeof PriorityLow | typeof PriorityMedium | typeof PriorityHigh;
+```
+
+```typescript
+// TypeScript output (with enum_style: "literal_union")
+export type Priority = 0 | 1 | 2;
 ```
 
 **Mixed Const Blocks:**
@@ -500,6 +513,13 @@ export const DefaultTimeout = 30;
 export const UserRoleAdmin = "admin";
 export const UserRoleGuest = "guest";
 export type UserRole = typeof UserRoleAdmin | typeof UserRoleGuest;
+export const MaxRetries = 5;
+export const DefaultTimeout = 30;
+```
+
+```typescript
+// TypeScript output (with enum_style: "literal_union")
+export type UserRole = "admin" | "guest";
 export const MaxRetries = 5;
 export const DefaultTimeout = 30;
 ```
