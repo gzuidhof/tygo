@@ -449,6 +449,21 @@ func (g *PackageGenerator) writeTypeSpec(
 		g.writeCommentGroupIfNotNil(s, group.doc, 0)
 	}
 
+	// Annotated interfaces use their precomputed concrete member list.
+	if members, ok := g.interfaceUnions[ts]; ok {
+		s.WriteString("export type ")
+		s.WriteString(ts.Name.Name)
+		s.WriteString(" = ")
+		s.WriteString(strings.Join(members, " | "))
+		s.WriteString(";")
+		if ts.Comment != nil && g.PreserveTypeComments() {
+			g.writeSingleLineComment(s, ts.Comment)
+		} else {
+			s.WriteString("\n")
+		}
+		return
+	}
+
 	st, isStruct := ts.Type.(*ast.StructType)
 	if isStruct {
 		s.WriteString("export interface ")

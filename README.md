@@ -211,7 +211,7 @@ export interface Book {
 
 You could use the `frontmatter` field in the config to inject `export type Genre = "novel" | "crime" | "fantasy"` at the top of the file, and use `tstype:"Genre"`. I personally prefer that as we may use the `Genre` type more than once.
 
-**`tygo:emit` directive**
+### `tygo:emit` directive
 
 Another way to generate types that cannot be directly represented in Go is to use a `//tygo:emit` directive to
 directly emit literal TS code.
@@ -261,6 +261,43 @@ export interface CustomMarshalled {
 ```
 
 Generating types this way is particularly useful for tuple types, because a comma cannot be used in the `tstype` tag.
+
+### `tygo:union` directive
+
+Use `//tygo:union` on a named interface to emit a TypeScript union of its generated concrete implementations:
+
+```golang
+//tygo:union
+type Message interface {
+  isMessage()
+}
+
+type SuccessMessage struct {
+  Result string `json:"result"`
+}
+
+func (SuccessMessage) isMessage() {}
+
+type FailureMessage struct {
+  Error string `json:"error"`
+}
+
+func (*FailureMessage) isMessage() {}
+```
+
+```typescript
+export type Message = SuccessMessage | FailureMessage;
+
+export interface SuccessMessage {
+  result: string;
+}
+
+export interface FailureMessage {
+  error: string;
+}
+```
+
+Go interfaces are normally open, so union generation is explicit. Tygo treats the generated concrete types in the same package as the complete TypeScript union. It recognizes both value and pointer receiver implementations, preserves source declaration order, and omits excluded or otherwise non-generated declarations. Generic union interfaces and generic implementing types are not currently supported. Generation fails if no eligible implementation remains.
 
 ### Required fields
 
