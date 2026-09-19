@@ -1,6 +1,6 @@
 module github.com/gzuidhof/tygo
 
-go 1.18
+go 1.26.0
 
 require (
 	github.com/spf13/cobra v1.3.0
@@ -11,9 +11,8 @@ require (
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	golang.org/x/mod v0.5.1 // indirect
-	golang.org/x/sys v0.1.0 // indirect
-	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
+	golang.org/x/mod v0.41.0 // indirect
+	golang.org/x/sync v0.23.0 // indirect
 )
 
 require (
@@ -22,6 +21,6 @@ require (
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/testify v1.9.0
-	golang.org/x/tools v0.1.9
+	golang.org/x/tools v0.50.0
 	gopkg.in/guregu/null.v4 v4.0.0
 )

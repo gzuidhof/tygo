@@ -583,10 +583,17 @@ func (g *PackageGenerator) writeValueSpec(
 
 		if hasExplicitValue {
 			val := vs.Values[i]
-			tempSB := &strings.Builder{}
-			// log.Println("const:", name.Name, reflect.TypeOf(val), val)
-			g.writeType(tempSB, val, nil, 0, false)
-			group.groupValue = tempSB.String()
+			// A constant's VALUE is not a type, so ask go/types for the value it already
+			// computed. writeType below is a fallback for when type information is absent;
+			// it renders literals correctly and emits the fallback TYPE for anything else,
+			// which is not a valid value. See constantTSValue.
+			if tsVal, ok := g.constantTSValue(val); ok {
+				group.groupValue = tsVal
+			} else {
+				tempSB := &strings.Builder{}
+				g.writeType(tempSB, val, nil, 0, false)
+				group.groupValue = tempSB.String()
+			}
 		}
 
 		valueString := group.groupValue

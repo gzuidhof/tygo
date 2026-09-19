@@ -39,7 +39,14 @@ func (g *Tygo) SetTypeMapping(goType string, tsType string) {
 
 func (g *Tygo) Generate() error {
 	pkgs, err := packages.Load(&packages.Config{
-		Mode: packages.NeedSyntax | packages.NeedFiles,
+		// NeedTypes/NeedTypesInfo let writeValueSpec ask go/types for a constant's
+		// evaluated value instead of re-deriving it from the AST. NeedImports/NeedDeps
+		// extend that to constants declared in another package. Type information is
+		// used opportunistically: if a package does not type-check, TypesInfo is
+		// absent and rendering falls back to the AST exactly as before.
+		Mode: packages.NeedSyntax | packages.NeedFiles |
+			packages.NeedTypes | packages.NeedTypesInfo |
+			packages.NeedImports | packages.NeedDeps,
 	}, g.conf.PackageNames()...)
 	if err != nil {
 		return err
